@@ -35,7 +35,7 @@ pub async fn pre_install(root: String, target: String) -> Result<String, String>
 	//TODO fetch the iso from a remote server...right now it must be placed locally
 
 	//NOTE users may manually bypass the prebuilt ubuntu iso and build the iso themselves using our utility 
-	//https://github.com/wild-kard/arctica-iso-builder 
+	//https://github.com/bowlarbear/arctica-iso-builder 
 	//users should create the artica-tmp directory in their home dir and move the arctica-ubuntu-22.04-amd64.iso created with the utility into it
 
     //check if ubuntu iso already exists, and if not, obtain

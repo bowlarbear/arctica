@@ -15,7 +15,7 @@
       </ol>
       <p>Arctica is a Free and Open Source wrapper script that installs bitcoin core and then walks the user through setup of a highly secure & private cold storage solution. The software is designed to make Bitcoin more difficult to lose, steal, or extort than any other asset. This protocol contains both a high security and a medium security area and is designed for storage of amounts in excess of 1 BTC in mind.</p>
       <ul>
-          <li>Arctica is a key management system built in Rust on top of Bitcoin Core Backend. The <a href="https://github.com/wild-kard/arctica-frontend">Front End Repo</a> is built with Vue.js and runs as a standalone desktop application through tauri which emulates web view without requiring the use of a browser.</li>
+          <li>Arctica is a key management system built in Rust on top of Bitcoin Core Backend. The <a href="https://github.com/bowlarbear/arctica-frontend">Front End Repo</a> is built with Vue.js and runs as a standalone desktop application through tauri which emulates web view without requiring the use of a browser.</li>
           <li>Arctica requires users do what is needed for safe and secure bitcoin storage even when this requires more time and effort - the first task in the Arctica instructions is to setup trustworthy & dedicated Bitcoin laptops.</li>
           <li>Before beginning, users require:</li>
            -Atleast 1 dedicated laptop to use as a full node (additional laptops may be used to boot cold wallet signers), you need a CD drive and a webcam. These may be usb tethered, however consider the number of usb ports available to you (I use (2) E490 Thinkpads with 2TB WD Blue SATA SSD, built in webcam, and USB tethered ASUS Zendrive 8X Disc drive).
@@ -47,11 +47,11 @@
         </ul>
 
 
-  <p> <a href="https://github.com/wild-kard/arctica-iso-builder">ISO Builder utility </a> </p>
+  <p> <a href="https://github.com/bowlarbear/arctica-iso-builder">ISO Builder utility </a> </p>
               <p>A comprehensive technial design document can be found <a href="https://docs.google.com/document/d/1xRGrQT8TMdm1fByosnF7j1ZKKSrY7U7Q_8lHs9Qc1pQ/edit?usp=sharing">here</a> </p>
         <p>NOTE: Arctica is currently in Beta and is not currently recommended for the storage of large amounts until we have completed more extensive Beta testing.</p>
 
-  <p> <a href="https://github.com/wild-kard/arctica-iso-builder">ISO Builder utility </a> </p>
+  <p> <a href="https://github.com/bowlarbear/arctica-iso-builder">ISO Builder utility </a> </p>
     </div>
 </template>
 
@@ -63,7 +63,7 @@ To build arctica from source first install the latest rustup toolchain
 
 clone the git repo in your home directory
 
-`git clone https://github.com/wild-kard/arctica`
+`git clone https://github.com/bowlarbear/arctica`
 
 Navigate into the arctica directory from your home directory
 
