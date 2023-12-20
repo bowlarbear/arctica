@@ -665,7 +665,11 @@ pub async fn init_bitcoind() ->Result<String, String> {
 pub async fn start_bitcoind(reindex:bool, networkactive:bool, wallets:bool) -> Result<String, Error> {
     println!("start_bitcoind");
 	//TODO: See if we can use this less often, the only time this block should be required is immediately following initial setup
-    bash("sudo", &vec!["chmod", "777", "-R", &(get_home()?+"/.bitcoin")], false)?;
+    //pgrep bitcoind to check if already running
+	let output = Command::new("pgrep").arg("bitcoind").output().unwrap();
+	if !output.stdout.is_empty(){
+		return Ok(format!("SUCCESS Bitcoin Daemon is already running"));
+	}
 
     if !networkactive {
         println!("start_bitcoind: networkactive == false");

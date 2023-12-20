@@ -337,33 +337,33 @@ async fn create_ramdisk() -> Result<String, String> {
 //assumes a default ubuntu install on the internal disk without any custom partitioning TODO: make this more robust if possible
 async fn mount_internal() -> Result<String, String> {
 	//check for an existing mount
-	let mut uuid = get_uuid().unwrap();
-	//mount internal drive if nvme
-	if uuid == "ERROR in parsing /media/user" {
-		return Err(format!("Error in parsing /media/user to get uuid"))
-	}
-	else if uuid == "none"{
+	let uuid = match get_uuid(){
+		Ok(uuid) => uuid,
+		Err(Error::UUIDNotFound())=>"none".to_string(),
+		Err(e)=> return Err(format!("Error getting UUID"))
+	};
+	if uuid == "none"{
 		//mount the internal drive if NVME
 		Command::new("udisksctl").args(["mount", "--block-device", "/dev/nvme0n1p2"]).output().unwrap();
 		//mount internal drive if SATA
 		Command::new("udisksctl").args(["mount", "--block-device", "/dev/sda2"]).output().unwrap();
-		//Attempt to shut down bitcoin core
-		let output = Command::new(&(get_home().unwrap()+"/bitcoin-25.0/bin/bitcoin-cli")).args(["stop"]).output().unwrap();
-		//bitcoin core shutdown fails (meaning it was not running)...
-		if output.status.success() {
-			//function succeeds, core is running for some reason, wait 15s for daemon to stop
-			Command::new("sleep").args(["15"]).output().unwrap();
+		//pgrep bitcoind to check if running
+		let output = Command::new("pgrep").arg("bitcoind").output().unwrap();
+		if !output.stdout.is_empty(){
+			//Attempt to shut down bitcoin core
+			let output = Command::new(&(get_home().unwrap()+"/bitcoin-25.0/bin/bitcoin-cli")).args(["stop"]).output().unwrap();
+			//bitcoin core shutdown fails (meaning it was not running)...
+			if output.status.success() {
+				//function succeeds, core is running for some reason, wait 15s for daemon to stop
+				Command::new("sleep").args(["15"]).output().unwrap();
+			}
 		}
 		//obtain the UUID of the currently mounted internal storage drive
-		uuid = get_uuid().unwrap();
-		//error in get_uuid()
-		if uuid == "ERROR in parsing /media/user" {
-			return Err(format!("Error in parsing /media/user to get uuid"))
-		}
-		//no uuid found
-		else if uuid == "none" {
-			return Err(format!("ERROR could not find a valid UUID in /media/$user"));
-		}
+		let uuid = match get_uuid(){
+			Ok(uuid) => uuid,
+			Err(Error::UUIDNotFound())=> return Err(format!("ERROR could not find a valid UUID in /media/$user")),
+			Err(e)=> return Err(format!("Error getting UUID"))
+		};
 		//obtain the username of the internal storage device
 		let host = Command::new(&("ls")).args([&("/media/".to_string()+&get_user().unwrap()+"/"+&(uuid.to_string())+"/home")]).output().unwrap();
 		if !host.status.success() {
