@@ -386,7 +386,7 @@ async fn mount_internal() -> Result<String, String> {
 		}
 		//open file permissions of internal storage dotfile dirs
 		//recursive open TODO add some error handling here, if this is successful it makes the rest of the chmods below deprecated
-		Command::new("sudo").args(["chmod", "-R" "777", &("/media/".to_string()+&get_user().unwrap()+"/"+&(uuid.to_string())+"/home/"+&(host_user.to_string())+"/.bitcoin")]).output().unwrap();
+		Command::new("sudo").args(["chmod", "-R", "777", &("/media/".to_string()+&get_user().unwrap()+"/"+&(uuid.to_string())+"/home/"+&(host_user.to_string())+"/.bitcoin")]).output().unwrap();
 		let output = Command::new("sudo").args(["chmod", "777", &("/media/".to_string()+&get_user().unwrap()+"/"+&(uuid.to_string())+"/home/"+&(host_user.to_string())+"/.bitcoin")]).output().unwrap();
 		if !output.status.success() {
 			return Err(format!("ERROR in opening file permissions of internal storage .bitcoin dirs {}", std::str::from_utf8(&output.stderr).unwrap()));

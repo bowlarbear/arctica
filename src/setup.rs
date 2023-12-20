@@ -436,7 +436,7 @@ pub async fn create_setup_cd() -> Result<String, String> {
 	//create start time file
 	let start_time = Command::new("date").args(["+%s"]).output().unwrap();
 	let start_time_output = std::str::from_utf8(&start_time.stdout).unwrap();
-	let start_time_int = &start_time_output.trim().parse().unwrap();
+	let start_time_int: i32 = start_time_output.trim().parse().unwrap();
 	//these are the decay times as advertised in documentation
 	// delayed_decay1
 	let four_years: i32 = start_time_int + 126144000; //start_time + 4 years in seconds
