@@ -9,7 +9,7 @@ use std::process::Stdio;
 //import helper.rs module
 use crate::helper::{
     get_user, get_home, write, generate_keypair, store_string, is_dir_empty,
-	get_cd_path,
+	get_cd_path, eject_disc,
 
 };
 
@@ -532,10 +532,10 @@ pub async fn create_setup_cd() -> Result<String, String> {
 		return Err(format!("ERROR in create setupCD with burning iso = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
 	//eject the disc
-	let output = Command::new("sudo").args(["eject", &path]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create setupCD with ejecting CD = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
+	match eject_disc(){
+		Ok(res) => res,
+		Err(e) => return Err(format!("ERROR in ejecting CD = {}", e))
+	};
 	Ok(format!("SUCCESS in Creating Setup CD"))
 }
 
@@ -833,10 +833,10 @@ pub async fn make_backup(number: String) -> Result<String, String> {
 		return Err(format!("ERROR in making backup with burning iso to CD = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
 	//eject the disc
-	let output = Command::new("sudo").args(["eject", &path]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in refreshing setupCD with ejecting CD = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
+	match eject_disc(){
+		Ok(res) => res,
+		Err(e) => return Err(format!("ERROR in ejecting CD = {}", e))
+	};
 	Ok(format!("SUCCESS in making backup of current HW"))
 }
 

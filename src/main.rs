@@ -22,7 +22,7 @@ use error::Error;
 //import helper.rs module
 mod helper;
 use helper::{
-	bash, get_user, get_home, is_dir_empty, get_uuid, get_cd_path,
+	bash, get_user, get_home, is_dir_empty, get_uuid, get_cd_path, eject_disc,
 	write, retrieve_decay_time_integer, parse_fdisk_result, run_fdisk, find_new_device
 };
 
@@ -192,29 +192,23 @@ async fn refresh_cd(psbt: bool) -> Result<String, String> {
 		return Err(format!("ERROR in refreshing CD with burning iso = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
 	//eject the disc
-	let output = Command::new("sudo").args(["eject", &path]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in refreshing CD with ejecting CD = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
+	match eject_disc(){
+		Ok(res) => res,
+		Err(e) => return Err(format!("ERROR in ejecting CD = {}", e))
+	};
+
 	Ok(format!("SUCCESS in refreshing CD"))
 }
 
 //eject the current disc
+//please note that this is different than the helper function eject_disc() which is called internally only
 #[tauri::command]
 async fn eject_cd() -> Result<String, String> {
-	//obtain CD path
-	let path = match get_cd_path(){
-		Ok(path) => path,
-        Err(er) => {
-        	return Err(format!("{}", er))
-        }
-	};
-	//copy cd contents to ramdisk
-	let output = Command::new("sudo").args(["eject", &path]).output().unwrap();
-	if !output.status.success() {
-    	return Err(format!("ERROR in ejecting CD = {}", std::str::from_utf8(&output.stderr).unwrap()));
-    }
-	Ok(format!("SUCCESS in ejecting CD"))
+	//eject the current optical disc
+	match eject_disc(){
+		Ok(res) => return Ok(format!("SUCCESS in ejecting CD")),
+		Err(e) => return Err(format!("ERROR in ejecting CD = {}", e))
+	}
 }
 
 //pack up and encrypt the contents of the sensitive directory into an encrypted.gpg file in $HOME
@@ -549,10 +543,10 @@ async fn recovery_initiate() -> Result<String, String> {
 		return Err(format!("ERROR converting to transfer CD with burning ISO to CD = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
 	//eject the disc
-	let output = Command::new("sudo").args(["eject", &path]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in refreshing setupCD with ejecting CD = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
+	match eject_disc(){
+		Ok(res) => res,
+		Err(e) => return Err(format!("ERROR in ejecting CD = {}", e))
+	};
 	Ok(format!("SUCCESS in creating recovery CD"))
 }
 
