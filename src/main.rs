@@ -396,7 +396,7 @@ async fn mount_internal() -> Result<String, String> {
 			return Err(format!("ERROR in opening file permissions of internal chainstate storage .bitcoin dirs {}", std::str::from_utf8(&output.stderr).unwrap()));
 		} 
 		//open file permissions for settings.tmp
-		// let output = Command::new("sudo").args(["chmod", "777", &("/media/".to_string()+&get_user().unwrap()+"/"+&(uuid.to_string())+"/home/"+&(host_user.to_string())+"/.bitcoin/settings.tmp")]).output().unwrap();
+		Command::new("sudo").args(["chmod", "777", &("/media/".to_string()+&get_user().unwrap()+"/"+&(uuid.to_string())+"/home/"+&(host_user.to_string())+"/.bitcoin/settings.tmp")]).output().unwrap();
 		// if !output.status.success() {
 		// 	return Err(format!("ERROR in opening file permissions of internal settings.tmp .bitcoin file {}", std::str::from_utf8(&output.stderr).unwrap()));
 		// } 
