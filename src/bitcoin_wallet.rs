@@ -780,6 +780,12 @@ pub async fn check_bitcoin_sync_status() -> Result<String, String> {
 
 #[tauri::command]
 pub async fn stop_bitcoind() -> Result<String, String> {
+	//check if bitcoin daemon is running
+	let output = Command::new("pgrep").arg("bitcoind").output().unwrap();
+	if output.stdout.is_empty(){
+		Command::new("sync").output().unwrap();
+		Ok(format!("SUCCESS Bitcoin Daemon is already stopped"))
+	}
 	//stop bitcoind
 	let output = Command::new(&(get_home().unwrap()+"/bitcoin-25.0/bin/bitcoin-cli")).args(["stop"]).output().unwrap();
 	if !output.status.success() {
