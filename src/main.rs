@@ -514,7 +514,7 @@ async fn recovery_initiate() -> Result<String, String> {
 		return Err(format!("ERROR in creating recovery CD, with creating config = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
 	//collect shards from Hardware Wallets for export to transfer CD
-	let output = Command::new("cp").args(["-R", &(get_home().unwrap()+"/shards"), "/mnt/ramdisk/CDROM/shards"]).output().unwrap();
+	let output = Command::new("cp").args(["-R", &(get_home().unwrap()+"/shards"), "/mnt/ramdisk/CDROM"]).output().unwrap();
 	if !output.status.success() {
     	return Err(format!("ERROR in creating recovery CD with copying shards from HW = {}", std::str::from_utf8(&output.stderr).unwrap()));
     }
