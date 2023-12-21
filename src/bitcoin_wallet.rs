@@ -784,7 +784,7 @@ pub async fn stop_bitcoind() -> Result<String, String> {
 	let output = Command::new("pgrep").arg("bitcoind").output().unwrap();
 	if output.stdout.is_empty(){
 		Command::new("sync").output().unwrap();
-		Ok(format!("SUCCESS Bitcoin Daemon is already stopped"))
+		return Ok(format!("SUCCESS Bitcoin Daemon is already stopped"))
 	}
 	//stop bitcoind
 	let output = Command::new(&(get_home().unwrap()+"/bitcoin-25.0/bin/bitcoin-cli")).args(["stop"]).output().unwrap();
