@@ -233,22 +233,42 @@ pub fn retrieve_decay_time_integer(file: String) -> i64 {
 	}
 }
 
-//get the mount point of the currently inserted disc
-pub fn get_cd_path() -> Result<String, String> {
-	//query /dev/sr?
-	let output = Command::new("bash").arg("-c").arg("ls /dev/sr?").output().unwrap();
-	if !output.status.success() {
-	  return Err(format!("error querying /dev/sr?, no results found"));
-	}
-	let paths = std::str::from_utf8(&output.stdout).unwrap().trim();
-	let devices: Vec<&str> = paths.trim().split_whitespace().collect();
-	//if the result only contains one result we can assume this is the valid path
-	match devices.len(){
+//use regex to parse a wodim --devices query for the dev mount
+pub fn extract_wodim_device(output: &str) -> Result<String, String>{
+	let re = Regex::new(r"dev='([^']*)'").unwrap();
+	let matches: Vec<_> = re.captures_iter(output).collect();
+
+	match matches.len(){
 		0 => Err("Error No valid path found".to_string()),
-		1 => Ok(devices[0].to_string()),
-		//unsure how to handle this condition beyond throwing an error
+		1 => Ok(matches[0].get(1).unwrap().as_str().to_string()),
 		_ => Err("Error multiple paths found".to_string())
 	}
+}
+
+//get the mount point of the currently inserted disc
+pub fn get_cd_path() -> Result<String, String> {
+	let output = Command::new("wodim").arg("--devices").output().unwrap();
+	let output_str = std::str::from_utf8(&output.stdout).unwrap().to_string();
+
+	match extract_wodim_device(&output_str){
+		Ok(device)=> Ok(device.to_string()),
+		Err(e) => Err(e.to_string())
+	}
+
+	// //query /dev/sr?
+	// let output = Command::new("bash").arg("-c").arg("ls /dev/sr?").output().unwrap();
+	// if !output.status.success() {
+	//   return Err(format!("error querying /dev/sr?, no results found"));
+	// }
+	// let paths = std::str::from_utf8(&output.stdout).unwrap().trim();
+	// let devices: Vec<&str> = paths.trim().split_whitespace().collect();
+	// //if the result only contains one result we can assume this is the valid path
+	// match devices.len(){
+	// 	0 => Err("Error No valid path found".to_string()),
+	// 	1 => Ok(devices[0].to_string()),
+	// 	//unsure how to handle this condition beyond throwing an error
+	// 	_ => Err("Error multiple paths found".to_string())
+	// }
 	
   }
 
