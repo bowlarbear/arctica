@@ -198,6 +198,7 @@ pub async fn init_iso() -> Result<String, String> {
 #[tauri::command]
 pub async fn create_bootable_usb(number: String, setup: String, awake: bool, baseline: String) -> Result<String, String> {
 	//TODO check for existing arctica installation and return error if found
+	//OR should we let the software overwrite an existing installation in case a user wants to retry after a failed attempt with the same stick?
 	
 	//obtain application's current working directory
 	let initial_cwd_buf = match env::current_dir(){

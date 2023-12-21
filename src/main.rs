@@ -402,10 +402,10 @@ async fn mount_internal() -> Result<String, String> {
 			return Err(format!("ERROR in opening file permissions of internal chainstate storage .bitcoin dirs {}", std::str::from_utf8(&output.stderr).unwrap()));
 		} 
 		//open file permissions for settings.tmp
-		let output = Command::new("sudo").args(["chmod", "777", &("/media/".to_string()+&get_user().unwrap()+"/"+&(uuid.to_string())+"/home/"+&(host_user.to_string())+"/.bitcoin/settings.tmp")]).output().unwrap();
-		if !output.status.success() {
-			return Err(format!("ERROR in opening file permissions of internal settings.tmp .bitcoin file {}", std::str::from_utf8(&output.stderr).unwrap()));
-		} 
+		// let output = Command::new("sudo").args(["chmod", "777", &("/media/".to_string()+&get_user().unwrap()+"/"+&(uuid.to_string())+"/home/"+&(host_user.to_string())+"/.bitcoin/settings.tmp")]).output().unwrap();
+		// if !output.status.success() {
+		// 	return Err(format!("ERROR in opening file permissions of internal settings.tmp .bitcoin file {}", std::str::from_utf8(&output.stderr).unwrap()));
+		// } 
 		//verify the mount
 		let e = std::path::Path::new(&("/media/ubuntu/".to_string()+&(uuid.to_string()))).exists();
 		if e {
@@ -580,12 +580,16 @@ async fn collect_shards() -> Result<String, String> {
 	let split = shards_output.split('\n');
 	let shards_vec: Vec<_> = split.collect();
 	//iterate through the vector and copy each file to /mnt/ramdisk/CDROM/shards
-	for i in shards_vec{
-		let output = Command::new("cp").args([&(get_home().unwrap()+"/shards"+&(i.to_string())), "/mnt/ramdisk/CDROM/shards"]).output().unwrap();
-		if !output.status.success() {
-			return Err(format!("Error in collect_shards() with copying shard {} = {}", i.to_string(), std::str::from_utf8(&output.stderr).unwrap()))
+	for i in &shards_vec{
+		if i == &""{
+			continue
+		}else{
+			let output = Command::new("cp").args([&(get_home().unwrap()+"/shards/"+&(i.to_string())), "/mnt/ramdisk/CDROM/shards"]).output().unwrap();
+			if !output.status.success() {
+				return Err(format!("Error in collect_shards() with copying shard {} = {}, Shards-vec: {:?}", i.to_string(), std::str::from_utf8(&output.stderr).unwrap(), &shards_vec))
+			}
 		}
-		} 
+	} 
 	Ok(format!("SUCCESS in collecting shards"))
 }
 
