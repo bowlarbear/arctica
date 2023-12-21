@@ -619,9 +619,9 @@ Ok(format!("PSBT: {:?}", psbt))
 #[tauri::command]
 pub async fn init_bitcoind() ->Result<String, String> {
 	//Download core if needed
-	let bitcoin_tar = std::path::Path::new(&(get_home().unwrap()+"/arctica/bitcoin-25.0-x86_64-linux-gnu.tar.gz")).exists();
+	let bitcoin_tar = std::path::Path::new(&(get_home().unwrap()+"/passport/bitcoin-25.0-x86_64-linux-gnu.tar.gz")).exists();
 	if bitcoin_tar == false{
-		let output = Command::new("wget").args(["-O", &(get_home().unwrap()+"/arctica/bitcoin-25.0-x86_64-linux-gnu.tar.gz"),"https://bitcoincore.org/bin/bitcoin-core-25.0/bitcoin-25.0-x86_64-linux-gnu.tar.gz"]).output().unwrap();
+		let output = Command::new("wget").args(["-O", &(get_home().unwrap()+"/passport/bitcoin-25.0-x86_64-linux-gnu.tar.gz"),"https://bitcoincore.org/bin/bitcoin-core-25.0/bitcoin-25.0-x86_64-linux-gnu.tar.gz"]).output().unwrap();
 		if !output.status.success() {
 			return Err(format!("ERROR in init_bitcoind with downloading bitcoin core = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
@@ -629,7 +629,7 @@ pub async fn init_bitcoind() ->Result<String, String> {
 	//extract bitcoin core
 	let bitcoin = std::path::Path::new(&(get_home().unwrap()+"/bitcoin-25.0")).exists();
 	if bitcoin == false{
-		let output = Command::new("tar").args(["-xzf", &(get_home().unwrap()+"/arctica/bitcoin-25.0-x86_64-linux-gnu.tar.gz"), "-C", &get_home().unwrap()]).output().unwrap();
+		let output = Command::new("tar").args(["-xzf", &(get_home().unwrap()+"/passport/bitcoin-25.0-x86_64-linux-gnu.tar.gz"), "-C", &get_home().unwrap()]).output().unwrap();
 		if !output.status.success() {
 			return Err(format!("ERROR in init_bitcoind with extracting bitcoin core = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
@@ -665,6 +665,7 @@ pub async fn init_bitcoind() ->Result<String, String> {
 pub async fn start_bitcoind(reindex:bool, networkactive:bool, wallets:bool) -> Result<String, Error> {
     println!("start_bitcoind");
 	//TODO: See if we can use this less often, the only time this block should be required is immediately following initial setup
+	bash("sudo", &vec!["chmod", "777", "-R", &(get_home()?+"/.bitcoin")], false)?;
     //pgrep bitcoind to check if already running
 	let output = Command::new("pgrep").arg("bitcoind").output().unwrap();
 	if !output.stdout.is_empty(){
