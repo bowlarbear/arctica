@@ -524,7 +524,7 @@ pub async fn create_setup_cd() -> Result<String, String> {
 	let output = Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=fast"]).output().unwrap();
 	if !output.status.success() {
 		//attempt alternative wipe method
-		Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=all"]).output().unwrap();
+		Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=fast"]).output().unwrap();
 	}
 	//burn setupCD iso to the setupCD
 	let output = Command::new("sudo").args(["wodim", &("dev=".to_string()+&path), "-v", "-data", "/mnt/ramdisk/setupCD.iso"]).output().unwrap();
@@ -825,7 +825,7 @@ pub async fn make_backup(number: String) -> Result<String, String> {
 	let output = Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=fast"]).output().unwrap();
 	if !output.status.success() {
 		//attempt alternative wipe method
-		Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=all"]).output().unwrap();
+		Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=fast"]).output().unwrap();
 	}
 	//burn setupCD iso to the backup CD
 	let output = Command::new("sudo").args(["wodim", &("dev=".to_string()+&path), "-v", "-data", &("/mnt/ramdisk/backup".to_string()+&number+".iso")]).output().unwrap();

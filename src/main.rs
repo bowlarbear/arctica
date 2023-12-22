@@ -183,7 +183,7 @@ async fn refresh_cd(psbt: bool) -> Result<String, String> {
 		let output = Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=fast"]).output().unwrap();
 		if !output.status.success() {
 			//attempt alternative wipe method
-			Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=all"]).output().unwrap();
+			Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=fast"]).output().unwrap();
 		}
 	}
 	//burn setupCD iso to the setupCD
@@ -547,7 +547,7 @@ async fn recovery_initiate() -> Result<String, String> {
 	let output = Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=fast"]).output().unwrap();
 	if !output.status.success() {
 		//attempt alternative wipe method
-		Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=all"]).output().unwrap();
+		Command::new("sudo").args(["wodim", "-v", &("dev=".to_string()+&path), "blank=fast"]).output().unwrap();
 	}
 	//burn transferCD iso to the transfer CD
 	let output = Command::new("sudo").args(["wodim", &("dev=".to_string()+&path), "-v", "-data", "/mnt/ramdisk/transferCD.iso"]).output().unwrap();
