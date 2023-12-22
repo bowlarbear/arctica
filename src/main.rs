@@ -14,7 +14,8 @@ use std::fs;
 use std::fs::File;
 use home::home_dir;
 use std::thread;
-use std::io::Write;
+use std::io::{self, Write, BufRead, BufReader};
+use std::path::Path;
 
 mod error;
 use error::Error;
@@ -452,7 +453,61 @@ async fn calculate_decay_time(file: String) -> Result<String, String> {
 //used to reconstitute shards into an encryption/decryption masterkey
 #[tauri::command]
 async fn combine_shards() -> Result<String, String> {
-	println!("combining shards in /mnt/ramdisk/shards");
+	let shards_list = std::path::Path::new("/mnt/ramdisk/shards.txt").exists();
+	if shards_list == true{
+		let output = Command::new("sudo").args(["rm", "/mnt/ramdisk/shards.txt"]).output().unwrap();
+		if !output.status.success() {
+			return Err(format!("ERROR in combine_shards, with removing stale shards_list = {}", std::str::from_utf8(&output.stderr).unwrap()));
+		}
+	}
+	let untrimmed = std::path::Path::new("/mnt/ramdisk/masterkey_untrimmed.txt").exists();
+	if untrimmed == true{
+		let output = Command::new("sudo").args(["rm", "/mnt/ramdisk/masterkey_untrimmed.txt"]).output().unwrap();
+		if !output.status.success() {
+			return Err(format!("ERROR in combine_shards, with removing masterkey_untrimmed = {}", std::str::from_utf8(&output.stderr).unwrap()));
+		}
+	}
+	println!("combining shards in /mnt/ramdisk/CDROM/shards");
+	let shard_dir = Path::new("/mnt/ramdisk/CDROM/shards");
+	let mut shards_list = match File::create("/mnt/ramdisk/shards.txt"){
+		Ok(file)=>file,
+		Err(e)=>return Err(format!("ERROR creating shards.txt: {}", e.to_string()))
+	};
+	//iterate over directory
+	let read_dir_result = fs::read_dir(shard_dir);
+	if read_dir_result.is_err(){
+		return Err(format!("ERROR reading the shard dir"))
+	}
+
+	let mut count = 0;
+	for entry in read_dir_result.unwrap(){
+		let entry = match entry{
+			Ok(e) => e,
+			Err(e)=> return Err(format!("ERROR reading shard entry: {}", e.to_string()))
+		};
+		let path = entry.path();
+
+		// Process only if it's a file
+		if path.is_file() {
+			let file = match File::open(&path) {
+				Ok(f) => f,
+				Err(e) => return Err(format!("ERROR opening shard file: {}", e.to_string())),
+			};
+			let mut reader = BufReader::new(file);
+			let mut contents = String::new();
+			if reader.read_line(&mut contents).is_err() {
+				continue;
+			}
+			if let Err(e) = writeln!(shards_list, "{}", contents.trim_end()) {
+				return Err(format!("ERROR writing shard to shard list: {}", e.to_string()));
+			}
+			// Increment the count and check if we've processed 5 files
+			count += 1;
+			if count >= 5 {
+				break;
+			}
+		}
+	}
 	//execute the combine-shards bash script
 	let output = Command::new("bash")
 		.args([get_home().unwrap()+"/scripts/combine-shards.sh"])
@@ -460,16 +515,16 @@ async fn combine_shards() -> Result<String, String> {
 		.expect("failed to execute process");
 	let content = match fs::read_to_string("/mnt/ramdisk/masterkey_untrimmed.txt"){
 		Ok(res)=>res,
-		Err(e)=>return Err(format!("ERROR: {}", e.to_string()))
+		Err(e)=>return Err(format!("ERROR reading masterkey_untrimmed to string: {}", e.to_string()))
 	};
 	let trimmed = content.trim_start_matches("Resulting secret:").trim();
 	let mut file = match fs::File::create("/mnt/ramdisk/CDROM/masterkey"){
 		Ok(res)=>res,
-		Err(e)=>return Err(format!("ERROR: {}", e.to_string()))
+		Err(e)=>return Err(format!("ERROR trimming masterkey: {}", e.to_string()))
 	};
 	match write!(file, "{}", trimmed){
 		Ok(_)=>return Ok(format!("Success combining shards into a Masterkey")),
-		Err(e)=>return Err(format!("ERROR: {}", e.to_string()))
+		Err(e)=>return Err(format!("ERROR writing masterkey to file: {}", e.to_string()))
 	}
 }
 

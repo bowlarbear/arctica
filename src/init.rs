@@ -432,28 +432,8 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 	let file = File::create(&("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/scripts/combine-shards.sh")).unwrap();
 	//populate combine-shards.sh with bash
 	let output = Command::new("echo").args(["-e", 
-    "rm /mnt/ramdisk/shards.txt\n
-	rm /mnt/ramdisk/masterkey_untrimmed.txt\n
-	#combine a minimum of 5 numbered shard files in the shards dir into a single shard.txt file which can be accepted by ssss-combine\n
-	#/mnt/ramdisk/shards\n
-	PLACEHOLDER=$(ls /mnt/ramdisk/shards)\n
-	strarr=($PLACEHOLDER)\n
-	X=1\n
-	Y=6\n
-	declare -i X\n
-	for val in \"${strarr[@]}\";\n
-	do\n
-		if [ $X -ne $Y ];\n
-		then\n
-		Line=$(cat /mnt/ramdisk/shards/$val)\n
-		echo $Line >> /mnt/ramdisk/shards.txt\n
-		X+=1\n
-		else\n
-		echo passing\n
-		fi\n
-	done\n
-	#once all 5 shards are in a single file (shards.txt) and properly formatted combine 5 key shards inside of shards.txt to retrieve masterkey\n
-	ssss-combine -t 5 < /mnt/ramdisk/shards.txt 2> /mnt/ramdisk/masterkey_untrimmed.txt\n"])
+    "#combine 5 key shards inside of shards.txt to reconstitute masterkey\n
+	ssss-combine -t 5 < /mnt/ramdisk/shards.txt 2> /mnt/ramdisk/masterkey_untrimmed.txt"])
 	.stdout(file).output().unwrap();
 	if !output.status.success() {
 		return Err(format!("ERROR with creating combine-shards.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
