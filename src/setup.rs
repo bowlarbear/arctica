@@ -406,8 +406,32 @@ pub async fn create_setup_cd() -> Result<String, String> {
 	//create setupCD config
 	let file = File::create("/mnt/ramdisk/CDROM/config.txt").unwrap();
 	Command::new("echo").args(["type=setupcd" ]).stdout(file).output().unwrap();
+	//create create-setup-cd.sh script
+	let file = File::create(&(get_home().unwrap()+"/arctica/create-setup-cd.sh")).unwrap();
+	//populate create-setup-cd.sh with bash
+	let output = Command::new("echo").args(["-e", 
+    "#generate masterkey for encrypting persistent directories\n
+	base64 /dev/urandom | head -c 50 > /mnt/ramdisk/CDROM/masterkey\n
+	#split masterkey used for encryption into a 5 of 11 scheme\n
+	ssss-split -t 5 -n 11 < /mnt/ramdisk/CDROM/masterkey > /mnt/ramdisk/shards_untrimmed.txt\n
+	#make target dir for shard files\n
+	mkdir /mnt/ramdisk/shards\n
+	#trim excess from the output of ssss split\n
+	sed -e '1d' /mnt/ramdisk/shards_untrimmed.txt > /mnt/ramdisk/shards.txt\n
+	FILE=\"/mnt/ramdisk/shards.txt\"\n
+	Lines=$(cat $FILE)\n
+	X=1\n
+	declare -i X\n
+	for Line in $Lines\n
+	do\n
+		echo $Line > /mnt/ramdisk/shards/shard$X.txt\n
+		X+=1\n
+	done"]).stdout(file).output().unwrap();
+	if !output.status.success() {
+		return Err(format!("ERROR with creating create-setup-cd.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
+	}
 	//create masterkey and derive shards
-	let output = Command::new("bash").args([&(get_home().unwrap()+"/scripts/create-setup-cd.sh")]).output().unwrap();
+	let output = Command::new("bash").args([&(get_home().unwrap()+"/arctica/create-setup-cd.sh")]).output().unwrap();
 	if !output.status.success() {
 		return Err(format!("ERROR in running create-setup-cd.sh {}", std::str::from_utf8(&output.stderr).unwrap()));
 	} 

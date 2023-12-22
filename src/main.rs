@@ -440,7 +440,7 @@ async fn calculate_decay_time(file: String) -> Result<String, String> {
 	remainder = remainder % 3600;
 	let minutes = remainder / 60;
 	remainder = remainder % 60;
-	//if the eecay has finished
+	//if the decay has finished
 	if years <= 0 && months <= 0 && weeks <= 0 && days <= 0 && hours <= 0 && minutes <= 0 {
 		Ok(format!("decay complete"))
 	}
@@ -470,9 +470,9 @@ async fn combine_shards() -> Result<String, String> {
 		}
 	}
 	//check for stale combine-shards.sh script
-	let combine_script = std::path::Path::new(&(get_home().unwrap()+"/scripts/combine-shards.sh")).exists();
+	let combine_script = std::path::Path::new(&(get_home().unwrap()+"/arctica/combine-shards.sh")).exists();
 	if combine_script == true{
-		let output = Command::new("sudo").args(["rm", &(get_home().unwrap()+"/scripts/combine-shards.sh")]).output().unwrap();
+		let output = Command::new("sudo").args(["rm", &(get_home().unwrap()+"/arctica/combine-shards.sh")]).output().unwrap();
 		if !output.status.success() {
 			return Err(format!("ERROR in combine_shards, with removing combine-shards script = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
@@ -519,7 +519,7 @@ async fn combine_shards() -> Result<String, String> {
 		}
 	}
 	//create combine-shards.sh script
-	let file = File::create(&(get_home().unwrap()+"/scripts/combine-shards.sh")).unwrap();
+	let file = File::create(&(get_home().unwrap()+"/arctica/combine-shards.sh")).unwrap();
 	//populate combine-shards.sh with bash
 	let output = Command::new("echo").args(["-e", 
 	"#combine 5 key shards inside of shards.txt to reconstitute masterkey\n
@@ -530,7 +530,7 @@ async fn combine_shards() -> Result<String, String> {
 	}
 	//execute the combine-shards bash script
 	let output = Command::new("bash")
-		.args([get_home().unwrap()+"/scripts/combine-shards.sh"])
+		.args([get_home().unwrap()+"/arctica/combine-shards.sh"])
 		.output()
 		.expect("failed to execute process");
 	let content = match fs::read_to_string("/mnt/ramdisk/masterkey_untrimmed.txt"){
@@ -718,8 +718,18 @@ async fn display_qr() -> Result<String, String>{
 //enable webcam with zbarcam and force stop zbarcam after it receives a valid string
 #[tauri::command]
 async fn enable_webcam_qr_scan() -> Result<String, String> {
+	let script = std::path::Path::new(&(get_home().unwrap()+"/arctica/enable-webcam-scan.sh")).exists();
+	if script == false{
+		//create enable-webcam-scan.sh script
+		let file = File::create(&(get_home().unwrap()+"/arctica/enable-webcam-scan.sh")).unwrap();
+		//populate enable-webcam-scan.sh with bash
+		let output = Command::new("echo").args(["-e", "zbarcam | head -n 1"]).stdout(file).output().unwrap();
+		if !output.status.success() {
+			return Err(format!("ERROR with creating enable-webcam-scan.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
+		}
+	}
 	//run enable webcam scan bash script, pipes zbarcam output to head
-	let output = Command::new("bash").args([&(get_home().unwrap()+"/scripts/enable-webcam-scan.sh")]).output().unwrap();
+	let output = Command::new("bash").args([&(get_home().unwrap()+"/arctica/enable-webcam-scan.sh")]).output().unwrap();
 	if !output.status.success() {
 		return Err(format!("ERROR in running enable-webcam-scan.sh {}", std::str::from_utf8(&output.stderr).unwrap()));
 	} 

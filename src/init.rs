@@ -150,22 +150,12 @@ pub async fn init_iso() -> Result<String, String> {
 	if !output.status.success() {
 		return Err(format!("ERROR with creating sed1.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
-	//make sed1.sh executable
-	let output = Command::new("sudo").args(["chmod", "+x", &(get_home().unwrap()+"/arctica/scripts/sed1.sh")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR with making sed1.sh executable: {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
 	//create sed2 script
 	let file = File::create(&(get_home().unwrap()+"/arctica/scripts/sed2.sh")).unwrap();
 	//populate sed2.sh with bash
 	let output = Command::new("echo").args(["-e", "< persistent-ubuntu1.iso sed 's/set timeout=30/set timeout=1 /' > persistent-ubuntu.iso"]).stdout(file).output().unwrap();
 	if !output.status.success() {
 		return Err(format!("ERROR with creating sed2.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//make sed2.sh executable
-	let output = Command::new("sudo").args(["chmod", "+x", &(get_home().unwrap()+"/arctica/scripts/sed2.sh")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR with making sed2.sh executable: {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
 	//execute sed1.sh which modifies the ubuntu iso to have persistence
 	let output = Command::new("bash").args([&(get_home().unwrap()+"/arctica/scripts/sed1.sh")]).output().unwrap();
@@ -419,45 +409,9 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 		return Err(format!("ERROR in create_bootable with copying zbar-tools = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
 	//copy over artica binary
-		let output = Command::new("cp").args([format!("{}/Arctica", initial_cwd.unwrap()), format!("/media/{}/writable/upper/home/ubuntu", get_user().unwrap())]).output().unwrap();
-		if !output.status.success() {
-			return Err(format!("ERROR in create_bootable with copying arctica binary = {}", std::str::from_utf8(&output.stderr).unwrap()));
-		}
-	//create scripts directory for hardware wallets
-	let output = Command::new("cp").args(["-r", &(get_home().unwrap()+"/arctica/scripts"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/scripts")]).output().unwrap();
+	let output = Command::new("cp").args([format!("{}/Arctica", initial_cwd.unwrap()), format!("/media/{}/writable/upper/home/ubuntu", get_user().unwrap())]).output().unwrap();
 	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with creating scripts directory = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//create create-setup-cd.sh script
-	let file = File::create(&("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/scripts/create-setup-cd.sh")).unwrap();
-	//populate create-setup-cd.sh with bash
-	let output = Command::new("echo").args(["-e", 
-    "#generate masterkey for encrypting persistent directories\n
-	base64 /dev/urandom | head -c 50 > /mnt/ramdisk/CDROM/masterkey\n
-	#split masterkey used for encryption into a 5 of 11 scheme\n
-	ssss-split -t 5 -n 11 < /mnt/ramdisk/CDROM/masterkey > /mnt/ramdisk/shards_untrimmed.txt\n
-	#make target dir for shard files\n
-	mkdir /mnt/ramdisk/shards\n
-	#trim excess from the output of ssss split\n
-	sed -e '1d' /mnt/ramdisk/shards_untrimmed.txt > /mnt/ramdisk/shards.txt\n
-	FILE=\"/mnt/ramdisk/shards.txt\"\n
-	Lines=$(cat $FILE)\n
-	X=1\n
-	declare -i X\n
-	for Line in $Lines\n
-	do\n
-		echo $Line > /mnt/ramdisk/shards/shard$X.txt\n
-		X+=1\n
-	done"]).stdout(file).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR with creating create-setup-cd.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//create enable-webcam-scan.sh script
-	let file = File::create(&("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/scripts/enable-webcam-scan.sh")).unwrap();
-	//populate enable-webcam-scan.sh with bash
-	let output = Command::new("echo").args(["-e", "zbarcam | head -n 1"]).stdout(file).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR with creating enable-webcam-scan.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
+		return Err(format!("ERROR in create_bootable with copying arctica binary = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
 	//extract bitcoin core
 	let output = Command::new("tar").args(["-xzf", &(get_home().unwrap()+"/arctica/bitcoin-25.0-x86_64-linux-gnu.tar.gz"), "-C", &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu")]).output().unwrap();
