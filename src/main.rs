@@ -451,14 +451,26 @@ async fn calculate_decay_time(file: String) -> Result<String, String> {
 
 //used to reconstitute shards into an encryption/decryption masterkey
 #[tauri::command]
-async fn combine_shards() -> String {
+async fn combine_shards() -> Result<String, String> {
 	println!("combining shards in /mnt/ramdisk/shards");
 	//execute the combine-shards bash script
 	let output = Command::new("bash")
 		.args([get_home().unwrap()+"/scripts/combine-shards.sh"])
 		.output()
 		.expect("failed to execute process");
-	format!("{:?}", output)
+	let content = match fs::read_to_string("/mnt/ramdisk/masterkey_untrimmed.txt"){
+		Ok(res)=>res,
+		Err(e)=>return Err(format!("ERROR: {}", e.to_string()))
+	};
+	let trimmed = content.trim_start_matches("Resulting secret:").trim();
+	let mut file = match fs::File::create("/mnt/ramdisk/CDROM/masterkey"){
+		Ok(res)=>res,
+		Err(e)=>return Err(format!("ERROR: {}", e.to_string()))
+	};
+	match write!(file, "{}", trimmed){
+		Ok(_)=>return Ok(format!("Success combining shards into a Masterkey")),
+		Err(e)=>return Err(format!("ERROR: {}", e.to_string()))
+	}
 }
 
 //updates config file params

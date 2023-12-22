@@ -433,6 +433,7 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 	//populate combine-shards.sh with bash
 	let output = Command::new("echo").args(["-e", 
     "rm /mnt/ramdisk/shards.txt\n
+	rm /mnt/ramdisk/masterkey_untrimmed.txt\n
 	#combine a minimum of 5 numbered shard files in the shards dir into a single shard.txt file which can be accepted by ssss-combine\n
 	#/mnt/ramdisk/shards\n
 	PLACEHOLDER=$(ls /mnt/ramdisk/shards)\n
@@ -452,11 +453,8 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 		fi\n
 	done\n
 	#once all 5 shards are in a single file (shards.txt) and properly formatted combine 5 key shards inside of shards.txt to retrieve masterkey\n
-	ssss-combine -t 5 < /mnt/ramdisk/shards.txt 2> /mnt/ramdisk/masterkey_untrimmed.txt\n
-	FILE=$(cat /mnt/ramdisk/masterkey_untrimmed.txt)\n
-	#trim excess from reconstituted key\n
-	echo $FILE | cut -c 19- > /mnt/ramdisk/CDROM/masterkey\n
-	rm /mnt/ramdisk/masterkey_untrimmed.txt"]).stdout(file).output().unwrap();
+	ssss-combine -t 5 < /mnt/ramdisk/shards.txt 2> /mnt/ramdisk/masterkey_untrimmed.txt\n"])
+	.stdout(file).output().unwrap();
 	if !output.status.success() {
 		return Err(format!("ERROR with creating combine-shards.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
