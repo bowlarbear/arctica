@@ -419,7 +419,7 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 		return Err(format!("ERROR in create_bootable with copying zbar-tools = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
 	//copy over artica binary
-		let output = Command::new("cp").args([format!("{}/Arctica", initial_cwd.unwrap()), format!("/media/{}/writable/upper/home/ubuntu/arctica", get_user().unwrap())]).output().unwrap();
+		let output = Command::new("cp").args([format!("{}/Arctica", initial_cwd.unwrap()), format!("/media/{}/writable/upper/home/ubuntu", get_user().unwrap())]).output().unwrap();
 		if !output.status.success() {
 			return Err(format!("ERROR in create_bootable with copying arctica binary = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
