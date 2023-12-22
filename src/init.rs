@@ -428,21 +428,6 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 	if !output.status.success() {
 		return Err(format!("ERROR in create_bootable with creating scripts directory = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
-	//create combine-shards.sh script
-	let file = File::create(&("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/scripts/combine-shards.sh")).unwrap();
-	//populate combine-shards.sh with bash
-	let output = Command::new("echo").args(["-e", 
-    "#combine 5 key shards inside of shards.txt to reconstitute masterkey\n
-	ssss-combine -t 5 < /mnt/ramdisk/shards.txt 2> /mnt/ramdisk/masterkey_untrimmed.txt"])
-	.stdout(file).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR with creating combine-shards.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//make combine-shards.sh executable
-	let output = Command::new("sudo").args(["chmod", "+x", &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/scripts/combine-shards.sh")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR with making combine-shards.sh executable: {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
 	//create create-setup-cd.sh script
 	let file = File::create(&("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/scripts/create-setup-cd.sh")).unwrap();
 	//populate create-setup-cd.sh with bash
@@ -467,22 +452,12 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 	if !output.status.success() {
 		return Err(format!("ERROR with creating create-setup-cd.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
-	//make create-setup-cd.sh executable
-	let output = Command::new("sudo").args(["chmod", "+x", &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/scripts/create-setup-cd.sh")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR with making create-setup-cd.sh executable: {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
 	//create enable-webcam-scan.sh script
 	let file = File::create(&("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/scripts/enable-webcam-scan.sh")).unwrap();
 	//populate enable-webcam-scan.sh with bash
 	let output = Command::new("echo").args(["-e", "zbarcam | head -n 1"]).stdout(file).output().unwrap();
 	if !output.status.success() {
 		return Err(format!("ERROR with creating enable-webcam-scan.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//make enable-webcam-scan.sh executable
-	let output = Command::new("sudo").args(["chmod", "+x", &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/scripts/enable-webcam-scan.sh")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR with making enable-webcam-scan.sh executable: {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
 	//extract bitcoin core
 	let output = Command::new("tar").args(["-xzf", &(get_home().unwrap()+"/arctica/bitcoin-25.0-x86_64-linux-gnu.tar.gz"), "-C", &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu")]).output().unwrap();

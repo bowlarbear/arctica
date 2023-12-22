@@ -453,6 +453,7 @@ async fn calculate_decay_time(file: String) -> Result<String, String> {
 //used to reconstitute shards into an encryption/decryption masterkey
 #[tauri::command]
 async fn combine_shards() -> Result<String, String> {
+	//check for stale shards list
 	let shards_list = std::path::Path::new("/mnt/ramdisk/shards.txt").exists();
 	if shards_list == true{
 		let output = Command::new("sudo").args(["rm", "/mnt/ramdisk/shards.txt"]).output().unwrap();
@@ -460,11 +461,20 @@ async fn combine_shards() -> Result<String, String> {
 			return Err(format!("ERROR in combine_shards, with removing stale shards_list = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
 	}
+	//check for stale output produced by combine-shards.sh script
 	let untrimmed = std::path::Path::new("/mnt/ramdisk/masterkey_untrimmed.txt").exists();
 	if untrimmed == true{
 		let output = Command::new("sudo").args(["rm", "/mnt/ramdisk/masterkey_untrimmed.txt"]).output().unwrap();
 		if !output.status.success() {
 			return Err(format!("ERROR in combine_shards, with removing masterkey_untrimmed = {}", std::str::from_utf8(&output.stderr).unwrap()));
+		}
+	}
+	//check for stale combine-shards.sh script
+	let combine_script = std::path::Path::new(&(get_home().unwrap()+"/scripts/combine-shards.sh")).exists();
+	if combine_script == true{
+		let output = Command::new("sudo").args(["rm", &(get_home().unwrap()+"/scripts/combine-shards.sh")]).output().unwrap();
+		if !output.status.success() {
+			return Err(format!("ERROR in combine_shards, with removing combine-shards script = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
 	}
 	println!("combining shards in /mnt/ramdisk/CDROM/shards");
@@ -478,7 +488,7 @@ async fn combine_shards() -> Result<String, String> {
 	if read_dir_result.is_err(){
 		return Err(format!("ERROR reading the shard dir"))
 	}
-
+	//read each file from the directory
 	let mut count = 0;
 	for entry in read_dir_result.unwrap(){
 		let entry = match entry{
@@ -507,6 +517,16 @@ async fn combine_shards() -> Result<String, String> {
 				break;
 			}
 		}
+	}
+	//create combine-shards.sh script
+	let file = File::create(&(get_home().unwrap()+"/scripts/combine-shards.sh")).unwrap();
+	//populate combine-shards.sh with bash
+	let output = Command::new("echo").args(["-e", 
+	"#combine 5 key shards inside of shards.txt to reconstitute masterkey\n
+	ssss-combine -t 5 < /mnt/ramdisk/shards.txt 2> /mnt/ramdisk/masterkey_untrimmed.txt"])
+	.stdout(file).output().unwrap();
+	if !output.status.success() {
+		return Err(format!("ERROR with creating combine-shards.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
 	//execute the combine-shards bash script
 	let output = Command::new("bash")
