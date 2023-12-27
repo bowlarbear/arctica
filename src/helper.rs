@@ -75,13 +75,16 @@ pub fn is_dir_empty(path: &str) -> bool {
 }
 
 //used to store a string param as a file
-pub fn store_string(string: String, file_name: &String) -> Result<String, String> {
-	let mut file_ref = match std::fs::File::create(file_name) {
+pub fn store_string(string: String, file_name: &String) -> Result<String, Error> {
+	let mut file_ref = match std::fs::File::create(file_name){
 		Ok(file) => file,
-		Err(err) => return Err(err.to_string()),
+        Err(err) => return Err(Error::FileNotCreated()),
 	};
-	file_ref.write_all(&string.as_bytes()).expect("Could not write string to file");
-	Ok(format!("SUCCESS stored with no problems"))
+	match file_ref.write_all(&string.as_bytes()){
+		Ok(file) => file,
+        Err(err) => return Err(Error::StringNotStored()),
+	};
+	Ok(format!("SUCCESS storing string"))
 }
 
 //used to store a PSBT param as a file

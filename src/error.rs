@@ -15,6 +15,12 @@ pub enum Error {
     #[error("Network Is Active/Connected")]
     NetworkActive(),
 
+    #[error("Failed to create file")]
+    FileNotCreated(),
+
+    #[error("Failed to store string")]
+    StringNotStored(),
+
     #[error(transparent)]
     IoError(#[from] std::io::Error),
     #[error(transparent)]

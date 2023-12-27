@@ -398,9 +398,6 @@ async fn mount_internal() -> Result<String, String> {
 		} 
 		//open file permissions for settings.tmp
 		Command::new("sudo").args(["chmod", "777", &("/media/".to_string()+&get_user().unwrap()+"/"+&(uuid.to_string())+"/home/"+&(host_user.to_string())+"/.bitcoin/settings.tmp")]).output().unwrap();
-		// if !output.status.success() {
-		// 	return Err(format!("ERROR in opening file permissions of internal settings.tmp .bitcoin file {}", std::str::from_utf8(&output.stderr).unwrap()));
-		// } 
 		//verify the mount
 		let e = std::path::Path::new(&("/media/ubuntu/".to_string()+&(uuid.to_string()))).exists();
 		if e {

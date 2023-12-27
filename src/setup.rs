@@ -37,22 +37,22 @@ pub async fn generate_store_key_pair(number: String) -> Result<String, String> {
     //store the xpriv as a file
 	match store_string(xpriv.to_string()+"/0/*", &private_key_file) {
 		Ok(_) => {},
-		Err(err) => return Err("ERROR could not store private key: ".to_string()+&err)
+		Err(err) => return Err("ERROR could not store private key: ".to_string()+&err.to_string())
 	}
     //store the xpub as a file
 	match store_string(xpub.to_string()+"/0/*", &public_key_file) {
 		Ok(_) => {},
-		Err(err) => return Err("ERROR could not store public key: ".to_string()+&err)
+		Err(err) => return Err("ERROR could not store public key: ".to_string()+&err.to_string())
 	}
 	//store the change_xpriv as a file
 	match store_string(xpriv.to_string()+"/1/*", &private_change_key_file) {
 		Ok(_) => {},
-		Err(err) => return Err("ERROR could not store private change key: ".to_string()+&err)
+		Err(err) => return Err("ERROR could not store private change key: ".to_string()+&err.to_string())
 	}
 	//store the change_xpub as a file
 	match store_string(xpub.to_string()+"/1/*", &public_change_key_file) {
 		Ok(_) => {},
-		Err(err) => return Err("ERROR could not store public change key: ".to_string()+&err)
+		Err(err) => return Err("ERROR could not store public change key: ".to_string()+&err.to_string())
 	}
 	//make the pubkey dir in the setupCD staging area if it does not already exist
 	let a = std::path::Path::new("/mnt/ramdisk/CDROM/pubkeys").exists();
@@ -104,22 +104,22 @@ pub async fn generate_store_simulated_time_machine_key_pair(number: String) -> R
     //store the xpriv as a file
 	match store_string(xpriv.to_string()+"/0/*", &private_key_file) {
 		Ok(_) => {},
-		Err(err) => return Err("ERROR could not store private key: ".to_string()+&err)
+		Err(err) => return Err("ERROR could not store private key: ".to_string()+&err.to_string())
 	}
     //store the xpub as a file
 	match store_string(xpub.to_string()+"/0/*", &public_key_file) {
 		Ok(_) => {},
-		Err(err) => return Err("ERROR could not store public key: ".to_string()+&err)
+		Err(err) => return Err("ERROR could not store public key: ".to_string()+&err.to_string())
 	}
 	//store the change_xpriv as a file
 	match store_string(xpriv.to_string()+"/1/*", &private_change_key_file) {
 		Ok(_) => {},
-		Err(err) => return Err("ERROR could not store private change key: ".to_string()+&err)
+		Err(err) => return Err("ERROR could not store private change key: ".to_string()+&err.to_string())
 	}
 	//store the change_xpub as a file
 	match store_string(xpub.to_string()+"/1/*", &public_change_key_file) {
 		Ok(_) => {},
-		Err(err) => return Err("ERROR could not store public change key: ".to_string()+&err)
+		Err(err) => return Err("ERROR could not store public change key: ".to_string()+&err.to_string())
 	}
 	//copy public key to setupCD dir
 	let output = Command::new("cp").args([&("/mnt/ramdisk/CDROM/timemachinekeys/time_machine_public_key".to_string()+&number), "/mnt/ramdisk/CDROM/pubkeys"]).output().unwrap();
@@ -231,7 +231,7 @@ pub async fn create_descriptor(hwnumber: String) -> Result<String, String> {
    println!("storing high descriptor");
    match store_string(high_descriptor.to_string(), high_file_dest) {
        Ok(_) => {},
-       Err(err) => return Err("ERROR could not store High Descriptor: ".to_string()+&err)
+       Err(err) => return Err("ERROR could not store High Descriptor: ".to_string()+&err.to_string())
    };
    //build delayed wallet change descriptor
    println!("building high change descriptor");
@@ -244,7 +244,7 @@ pub async fn create_descriptor(hwnumber: String) -> Result<String, String> {
    println!("storing high change descriptor");
    match store_string(high_change_descriptor.to_string(), high_change_file_dest) {
        Ok(_) => {},
-       Err(err) => return Err("ERROR could not store High Change Descriptor: ".to_string()+&err)
+       Err(err) => return Err("ERROR could not store High Change Descriptor: ".to_string()+&err.to_string())
    };
    //create the delayed wallet
    println!("creating delayed wallet");
@@ -280,7 +280,7 @@ pub async fn create_descriptor(hwnumber: String) -> Result<String, String> {
    println!("storing med descriptor");
    match store_string(med_descriptor.to_string(), med_file_dest) {
        Ok(_) => {},
-       Err(err) => return Err("ERROR could not store Immediate Descriptor: ".to_string()+&err)
+       Err(err) => return Err("ERROR could not store Immediate Descriptor: ".to_string()+&err.to_string())
    };
    //build the immediate change descriptor
    println!("building med change descriptor");
@@ -293,7 +293,7 @@ pub async fn create_descriptor(hwnumber: String) -> Result<String, String> {
    println!("storing med change descriptor");
    match store_string(med_change_descriptor.to_string(), med_change_file_dest) {
        Ok(_) => {},
-       Err(err) => return Err("ERROR could not store Immediate Change Descriptor: ".to_string()+&err)
+       Err(err) => return Err("ERROR could not store Immediate Change Descriptor: ".to_string()+&err.to_string())
    };
    //create the immediate wallet
    println!("creating immediate wallet");
@@ -326,7 +326,7 @@ pub async fn create_descriptor(hwnumber: String) -> Result<String, String> {
 //    println!("storing low descriptor");
 //    match store_string(low_descriptor.to_string(), low_file_dest) {
 //        Ok(_) => {},
-//        Err(err) => return Err("ERROR could not store Low Descriptor: ".to_string()+&err)
+//        Err(err) => return Err("ERROR could not store Low Descriptor: ".to_string()+&err.to_string())
 //    };
 
 //    //build the low change descriptor
@@ -340,7 +340,7 @@ pub async fn create_descriptor(hwnumber: String) -> Result<String, String> {
 //    println!("storing low change descriptor");
 //    match store_string(low_change_descriptor.to_string(), low_change_file_dest) {
 //        Ok(_) => {},
-//        Err(err) => return Err("ERROR could not store Low Change Descriptor: ".to_string()+&err)
+//        Err(err) => return Err("ERROR could not store Low Change Descriptor: ".to_string()+&err.to_string())
 //    };
 //    //creating low wallet
 //    println!("creating low wallet");
