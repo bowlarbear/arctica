@@ -28,7 +28,7 @@ pub async fn pre_install(root: String, target: String) -> Result<String, String>
 	if arc == false {
 		let output = Command::new("mkdir").arg(&(get_home().unwrap()+"/arctica-tmp")).output().unwrap();
 		if !output.status.success() {
-			return Err(format!("ERROR in pre_install with creating artica-tmp directory = {}", std::str::from_utf8(&output.stderr).unwrap()));
+			return Err(format!("ERROR in pre_install with creating arctica-tmp directory = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
 	}
 
@@ -36,7 +36,7 @@ pub async fn pre_install(root: String, target: String) -> Result<String, String>
 
 	//NOTE users may manually bypass the prebuilt ubuntu iso and build the iso themselves using our utility 
 	//https://github.com/bowlarbear/arctica-iso-builder 
-	//users should create the artica-tmp directory in their home dir and move the arctica-ubuntu-22.04-amd64.iso created with the utility into it
+	//users should create the arctica-tmp directory in their home dir and move the arctica-ubuntu-22.04-amd64.iso created with the utility into it
 
     //check if ubuntu iso already exists, and if not, obtain
 	// let b = std::path::Path::new(&(get_home().unwrap()+"/arctica-tmp/arctica-ubuntu-22.04-amd64.iso")).exists();
@@ -408,7 +408,7 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 	if !output.status.success() {
 		return Err(format!("ERROR in create_bootable with copying zbar-tools = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
-	//copy over artica binary
+	//copy over arctica binary
 	let output = Command::new("cp").args([format!("{}/Arctica", initial_cwd.unwrap()), format!("/media/{}/writable/upper/home/ubuntu", get_user().unwrap())]).output().unwrap();
 	if !output.status.success() {
 		return Err(format!("ERROR in create_bootable with copying arctica binary = {}", std::str::from_utf8(&output.stderr).unwrap()));
