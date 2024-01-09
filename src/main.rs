@@ -294,6 +294,11 @@ async fn create_ramdisk() -> Result<String, String> {
 		if !output.status.success() {
 			return Err(format!("ERROR in disabling swapiness {}", std::str::from_utf8(&output.stderr).unwrap()));
 			}
+		//open arctica directory permissions (putting this here because this script always runs at startup)
+		let output = Command::new("sudo").args(["chmod", "777", &(get_home().unwrap()+"/arctica")]).output().unwrap();
+		if !output.status.success() {
+			return Err(format!("ERROR in opening file permissions of $HOME/arctica = {}", std::str::from_utf8(&output.stderr).unwrap()));
+		}
 		//check if ramdisk exists
 		let c = std::path::Path::new("/mnt/ramdisk").exists();
 		if c == false {

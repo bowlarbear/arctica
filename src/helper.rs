@@ -40,7 +40,7 @@ pub fn bash(command: &str, args: &Vec<&str>, new_thread: bool) -> Result<String,
                 let output = child.wait_with_output()?;
                 if status.success() {
                     return Ok(String::from_utf8(output.stdout)?)
-                }
+				}
                 return Err(Error::CommandFailed(format!("{:?}", cmd), String::from_utf8(output.stderr)?))
             },
             None => {}
@@ -83,6 +83,20 @@ pub fn store_string(string: String, file_name: &String) -> Result<String, String
 	file_ref.write_all(&string.as_bytes()).expect("Could not write string to file");
 	Ok(format!("SUCCESS stored with no problems"))
 }
+
+//WIP REFACTOR
+// pub fn store_string(string: String, file_name: &String) -> Result<String, Error> {
+// 	let mut file_ref = match std::fs::File::create(file_name){
+// 		Ok(file) => file,
+//         Err(err) => return Err(Error::FileNotCreated("{:?}", err)),
+// 	};
+// 	match file_ref.write_all(&string.as_bytes()){
+// 		Ok(_) => return Ok(format!("SUCCESS storing string")),
+//         Err(err) => return Err(Error::StringNotStored()),
+// 	};
+// }
+
+
 
 //used to store a PSBT param as a file
 pub fn store_psbt(psbt: &WalletProcessPsbtResult, file_name: String) -> Result<String, String> {
