@@ -1,6 +1,7 @@
 <template>
     <div class="container" style="margin-top: 3rem;">
-      <h2>Arctica. A secure & private Bitcoin cold storage solution</h2>
+      <h1>Arctica. A secure & private Bitcoin cold storage solution</h1>
+      <h2>If you would like to support my work on Free and Open Source Software you can <a href="https://arcticaproject.org">donate here</a></h2>
       <p><b>WARNING: WE ARE CURRENTLY IN BETA TESTING, Arctica is not currently feature complete, while spend thresholds will still decay down to 1 of 7, users who lose their setup CD will require atleast 3 wallets to recover their login password. The timelocked wallet is not easily accessible prior to timelock expiry without a competent working knowledge of bitcoin cli. 
        <br>this software overwrites external storage media and CDs without much warning, I advise you only run arctica on a dedicated machine, remove any extraneous external storage media, and only insert new/blank USB sticks or SD cards and CDs when prompted.</b> </p>
       <p><b>Minimum Specs: </b>
