@@ -571,9 +571,19 @@ pub async fn install_warm_deps() -> Result<String, String> {
 	if !output.status.success() {
 		return Err(format!("ERROR in install_warm_deps with apt update = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
+	//upgrade ubuntu
 	let output = Command::new("sudo").args(["apt", "-y", "upgrade"]).output().unwrap();
 	if !output.status.success() {
-		return Err(format!("ERROR in install_warm_deps with apt upgrade = {}", std::str::from_utf8(&output.stderr).unwrap()));
+		//intercept and handle a dpkg error
+		if std::str::from_utf8(&output.stderr).unwrap().contains("dpkg interrupted"){
+			let output = Command::new("sudo").args(["dpkg", "--configure", "-a"]).output().unwrap();
+			if !output.status.success(){
+				return Err(format!("ERROR in install_warm_deps with dpkg configuration = {}", std::str::from_utf8(&output.stderr).unwrap()))
+			}
+		}
+		else{
+			return Err(format!("ERROR in install_warm_deps with apt upgrade = {}", std::str::from_utf8(&output.stderr).unwrap()));
+		}
 	}
 	//install xclip for copying address to desktop clipboard
 	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/xclip_0.13-2_amd64.deb")]).output().unwrap();

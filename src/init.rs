@@ -318,6 +318,7 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 		}
 	//make dependencies directory
 	Command::new("mkdir").args([&("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
+	
 	//copying dependencies genisoimage
 	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/genisoimage_9%3a1.1.11-3.2ubuntu1_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
 	if !output.status.success() {
@@ -408,6 +409,7 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 	if !output.status.success() {
 		return Err(format!("ERROR in create_bootable with copying zbar-tools = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
+
 	//copy over arctica binary
 	let output = Command::new("cp").args([format!("{}/Arctica", initial_cwd.unwrap()), format!("/media/{}/writable/upper/home/ubuntu", get_user().unwrap())]).output().unwrap();
 	if !output.status.success() {
