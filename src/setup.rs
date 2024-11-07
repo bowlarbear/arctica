@@ -378,31 +378,12 @@ pub async fn create_setup_cd() -> Result<String, String> {
 	println!("creating setup CD");
 	//create local shards dir
 	Command::new("mkdir").args([&(get_home().unwrap()+"/shards")]).output().unwrap();
-	//install HW dependencies for genisoimage
-	let output = Command::new("sudo").args(["apt", "install", &(get_home().unwrap()+"/dependencies/genisoimage_9%3a1.1.11-3.2ubuntu1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing genisoimage for create_setup_cd {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install HW dependencies for ssss
-	let output = Command::new("sudo").args(["apt", "install", &(get_home().unwrap()+"/dependencies/ssss_0.5-5_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing ssss for create_setup_cd {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install HW dependencies for wodim
-	let output = Command::new("sudo").args(["apt", "install", &(get_home().unwrap()+"/dependencies/wodim_9%3a1.1.11-3.2ubuntu1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing wodim for create_setup_cd {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install library for qrencode
-	let output = Command::new("sudo").args(["apt", "install", &(get_home().unwrap()+"/dependencies/libqrencode4_4.1.1-1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing libqrencode for create_setup_cd {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install HW dependencies for qrencode
-	let output = Command::new("sudo").args(["apt", "install", &(get_home().unwrap()+"/dependencies/qrencode_4.1.1-1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing qrencode for create_setup_cd {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
+	let output: String = match install_cold_deps().await{
+		Ok(output) => output,
+		Err(er) => {
+			return Err(format!("{}", er))
+		}
+	};
 	//create setupCD config
 	let file = File::create("/mnt/ramdisk/CDROM/config.txt").unwrap();
 	Command::new("echo").args(["type=setupcd" ]).stdout(file).output().unwrap();
@@ -656,7 +637,7 @@ pub async fn install_warm_deps() -> Result<String, String> {
 #[tauri::command]
 //install system level dependencies manually from the dependencies directory contained on each HW
 //these are required for all application operations on both awake false and awake true cards
-pub async fn install_hw_deps() -> Result<String, String> {
+pub async fn install_cold_deps() -> Result<String, String> {
 	println!("installing deps required by Hardware Wallet");
 	//install HW dependencies for genisoimage
 	let output = Command::new("sudo").args(["apt", "install", &(get_home().unwrap()+"/dependencies/genisoimage_9%3a1.1.11-3.2ubuntu1_amd64.deb")]).output().unwrap();

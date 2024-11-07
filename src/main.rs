@@ -37,7 +37,7 @@ use init::{
 mod setup;
 use setup::{
 	create_setup_cd, generate_store_key_pair, 
-	generate_store_simulated_time_machine_key_pair, create_descriptor, install_hw_deps, distribute_shards_hw2, 
+	generate_store_simulated_time_machine_key_pair, create_descriptor, install_cold_deps, distribute_shards_hw2, 
 	distribute_shards_hw3, distribute_shards_hw4, distribute_shards_hw5, distribute_shards_hw6,
 	distribute_shards_hw7, create_backup, make_backup, install_warm_deps,
 };
@@ -738,8 +738,16 @@ async fn enable_webcam_qr_scan() -> Result<String, String> {
 	//split the result and return the address if it's greater than 1 character
 	let output_str = std::str::from_utf8(&output.stdout).unwrap().trim();
     let qr_data: Vec<&str> = output_str.split(':').collect();
-    if qr_data.len() > 1 {
-        Ok(format!("{}", qr_data[1]))
+	if qr_data.len() == 1 {
+		Ok(format!("{}", qr_data[0]))
+	}
+    else if let Some(pos) = qr_data.iter().position(|&s| s == "bitcoin"){
+		if pos + 1 < qr_data.len(){
+			Ok(format!("{}", qr_data[pos + 1]))
+		}
+        else{
+			Err(format!("ERROR, no data after \'bitcoin:\' in payload"))
+		}
     } else {
         Err(format!("ERROR reading QR code"))
     }
@@ -953,7 +961,8 @@ fn main() {
         create_ramdisk,
         packup,
         unpack,
-        install_hw_deps,
+        install_cold_deps,
+		install_warm_deps,
         refresh_cd,
 		calculate_decay_time,
         distribute_shards_hw2,
@@ -994,7 +1003,6 @@ fn main() {
 		copy_to_clipboard,
 		retrieve_median_blocktime,
 		enable_networking, 
-		install_warm_deps,
 		enable_webcam_qr_scan,
 		clear_psbt,
 		export_backup,
