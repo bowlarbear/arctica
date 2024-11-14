@@ -378,7 +378,8 @@ pub async fn create_setup_cd() -> Result<String, String> {
 	println!("creating setup CD");
 	//create local shards dir
 	Command::new("mkdir").args([&(get_home().unwrap()+"/shards")]).output().unwrap();
-	let output: String = match install_cold_deps().await{
+	//install cold wallet HW dependencies
+	let output: String = match install_hw_deps(false).await{
 		Ok(output) => output,
 		Err(er) => {
 			return Err(format!("{}", er))
@@ -546,125 +547,75 @@ pub async fn create_setup_cd() -> Result<String, String> {
 
 //run on any card with the config value awake set to true at application boot
 #[tauri::command]
-pub async fn install_warm_deps() -> Result<String, String> {
-	//obtain & install recent security updates
-	let output = Command::new("sudo").args(["apt", "update"]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in install_warm_deps with apt update = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//upgrade ubuntu
-	let output = Command::new("sudo").args(["apt", "-y", "upgrade"]).output().unwrap();
-	if !output.status.success() {
-		//intercept and handle a dpkg error
-		if std::str::from_utf8(&output.stderr).unwrap().contains("dpkg interrupted"){
-			let output = Command::new("sudo").args(["dpkg", "--configure", "-a"]).output().unwrap();
-			if !output.status.success(){
-				return Err(format!("ERROR in install_warm_deps with dpkg configuration = {}", std::str::from_utf8(&output.stderr).unwrap()))
+pub async fn install_hw_deps(warm: bool) -> Result<String, String> {
+	if warm == true{
+		println!("installing warm deps required by Hardware Wallet");
+		//obtain & install recent security updates
+		let output = Command::new("sudo").args(["apt", "update"]).output().unwrap();
+		if !output.status.success() {
+			return Err(format!("ERROR in install_warm_deps with apt update = {}", std::str::from_utf8(&output.stderr).unwrap()));
+		}
+		//upgrade ubuntu
+		let output = Command::new("sudo").args(["apt", "-y", "upgrade"]).output().unwrap();
+		if !output.status.success() {
+			//intercept and handle a dpkg error
+			if std::str::from_utf8(&output.stderr).unwrap().contains("dpkg interrupted"){
+				let output = Command::new("sudo").args(["dpkg", "--configure", "-a"]).output().unwrap();
+				if !output.status.success(){
+					return Err(format!("ERROR in install_warm_deps with dpkg configuration = {}", std::str::from_utf8(&output.stderr).unwrap()))
+				}
+			}
+			else{
+				return Err(format!("ERROR in install_warm_deps with apt upgrade = {}", std::str::from_utf8(&output.stderr).unwrap()));
 			}
 		}
-		else{
-			return Err(format!("ERROR in install_warm_deps with apt upgrade = {}", std::str::from_utf8(&output.stderr).unwrap()));
-		}
+		let output = match install_packages_from_dir(&(get_home().unwrap()+"/dependencies/warm")).await{
+			Ok(output) => output,
+			Err(er) => {
+				return Err(format!("{}", er))
+			}
+		}; 
+		Ok(format!("Succes installing updates and warm depdencies!"))
 	}
-	//install xclip for copying address to desktop clipboard
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/xclip_0.13-2_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing xclip {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install TOR for connecting to the BPS
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/tor_0.4.6.10-1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing tor {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install libzbar0 for zbar-tools
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/libzbar0_0.23.92-4build2_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing libzbar0 {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install image magick for zbar-tools
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/imagemagick-6-common_8%3a6.9.11.60+dfsg-1.3ubuntu0.22.04.3_all.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing image magick {}", std::str::from_utf8(&output.stderr).unwrap()));
+	else{
+		println!("installing cold deps required by Hardware Wallet");
+		let output = match install_packages_from_dir(&(get_home().unwrap()+"/dependencies/cold")).await{
+			Ok(output) => output,
+			Err(er) => {
+				return Err(format!("{}", er))
+			}
+		};
+		Ok(format!("SUCCESS in installing cold dependencies"))
 	}
-	//install libaom3 for libheif1 for zbar-tools
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/libaom3_3.3.0-1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing libaom3 {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//install libdav1d5 for libheif1 for zbar-tools
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/libdav1d5_0.9.2-1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing libdav1d5 {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//install libde265-0 for libheif1 for zbar-tools
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/libde265-0_1.0.8-1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing libde265-0 {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//install libx265-199 for libheif1 for zbar-tools
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/libx265-199_3.5-2_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing libx265-199 {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//install libheif1 for zbar-tools
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/libheif1_1.12.0-2build1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing libheif1 {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//install liblqr for zbar-tools
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/liblqr-1-0_0.4.2-2.1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing liblqr {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//install libmagickcore for zbar-tools
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/libmagickcore-6.q16-6_8%3a6.9.11.60+dfsg-1.3ubuntu0.22.04.3_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing libmagickcore {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//install libmagickwand-6.q16-6 for zbar-tools
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/libmagickwand-6.q16-6_8%3a6.9.11.60+dfsg-1.3ubuntu0.22.04.3_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing libmagickwand {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install zbar-tools for webcam reading qr codes
-	let output = Command::new("sudo").args(["apt", "-y", "install", &(get_home().unwrap()+"/dependencies/zbar-tools_0.23.92-4build2_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing zbar-tools {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	return Ok(format!("Succes installing updates and warm depdencies!"))
+	
 }
 
-#[tauri::command]
-//install system level dependencies manually from the dependencies directory contained on each HW
-//these are required for all application operations on both awake false and awake true cards
-pub async fn install_cold_deps() -> Result<String, String> {
-	println!("installing deps required by Hardware Wallet");
-	//install HW dependencies for genisoimage
-	let output = Command::new("sudo").args(["apt", "install", &(get_home().unwrap()+"/dependencies/genisoimage_9%3a1.1.11-3.2ubuntu1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing genisoimage {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install HW dependencies for ssss
-	let output = Command::new("sudo").args(["apt", "install", &(get_home().unwrap()+"/dependencies/ssss_0.5-5_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing ssss {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install HW dependencies for wodim
-	let output = Command::new("sudo").args(["apt", "install", &(get_home().unwrap()+"/dependencies/wodim_9%3a1.1.11-3.2ubuntu1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing wodim {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install library for qrencode
-	let output = Command::new("sudo").args(["apt", "install", &(get_home().unwrap()+"/dependencies/libqrencode4_4.1.1-1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing libqrencode {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	//install HW dependencies for qrencode
-	let output = Command::new("sudo").args(["apt", "install", &(get_home().unwrap()+"/dependencies/qrencode_4.1.1-1_amd64.deb")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in installing qrencode {}", std::str::from_utf8(&output.stderr).unwrap()));
-	} 
-	Ok(format!("SUCCESS in installing HW dependencies"))
+pub async fn install_packages_from_dir(dir: &str) -> Result<(), String> {
+    // Read the directory and filter for .deb files
+    let entries = fs::read_dir(dir).map_err(|e| format!("Failed to read directory: {}", e))?;
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
+        let path = entry.path();        
+		// Only proceed if it's a .deb file
+        if let Some(extension) = path.extension() {
+            if extension == "deb" {
+                // Run the installation command for each .deb file
+                let output = Command::new("sudo")
+                    .args(["apt", "-y", "install", path.to_str().unwrap()])
+                    .output()
+                    .map_err(|e| format!("Failed to execute command: {}", e))?;                
+				// Check if the command was successful
+                if !output.status.success() {
+                    return Err(format!(
+                        "ERROR in installing {}: {}",
+                        path.display(),
+                        std::str::from_utf8(&output.stderr).unwrap_or("Unknown error")
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 //The following set of "distribute_shards" fuctions are for distributing encryption key shards to HW 2-7 during initial setup

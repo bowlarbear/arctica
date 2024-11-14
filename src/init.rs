@@ -113,12 +113,34 @@ pub async fn init_iso() -> Result<String, String> {
 			return Err(format!("ERROR in init iso with unmounting stale ubuntu iso = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
 	}
+	//create warm dependencies directory if it does not exist
+	let warm = std::path::Path::new(&(get_home().unwrap()+"/arctica/warm")).exists();
+	if warm == false {
+		let output = Command::new("mkdir").arg(&(get_home().unwrap()+"/arctica/warm")).output().unwrap();
+		if !output.status.success() {
+			return Err(format!("ERROR in init iso with creating arctica warm deps directory = {}", std::str::from_utf8(&output.stderr).unwrap()));
+		}
+	}
+	//create cold dependencies directory if it does not exist
+	let cold = std::path::Path::new(&(get_home().unwrap()+"/arctica/cold")).exists();
+	if cold == false {
+		let output = Command::new("mkdir").arg(&(get_home().unwrap()+"/arctica/cold")).output().unwrap();
+		if !output.status.success() {
+			return Err(format!("ERROR in init iso with creating arctica cold deps directory = {}", std::str::from_utf8(&output.stderr).unwrap()));
+		}
+	}
+	//set the current working directory to the warm deps directory
+	env::set_current_dir(&(get_home().unwrap()+"/arctica/warm"));
+    //download system level dependencies required for warm Hardware Wallets
+	Command::new("sudo").args(["apt", "download", "xclip", "tor", "zbar-tools", "libzbar0", "libmagickwand-6.q16-6", "imagemagick-6-common", "libmagickcore-6.q16-6", "libheif1", "liblqr-1-0", "libaom3", "libdav1d5", "libde265-0", "libx265-199"]).output().unwrap();
+	//set the current working directory to the cold deps directory
+	env::set_current_dir(&(get_home().unwrap()+"/arctica/cold"));
+	//download system level dependencies required for cold Hardware Wallets
+	Command::new("sudo").args(["apt", "download", "wodim", "genisoimage", "ssss", "qrencode", "libqrencode4"]).output().unwrap();
 	//set the current working directory to the application directory
 	env::set_current_dir(&(get_home().unwrap()+"/arctica"));
-    //download system level dependencies required for Hardware Wallets
-	Command::new("sudo").args(["apt", "download", "wodim", "genisoimage", "ssss", "qrencode", "libqrencode4", "xclip", "tor", "zbar-tools", "libzbar0", "libmagickwand-6.q16-6", "imagemagick-6-common", "libmagickcore-6.q16-6", "libheif1", "liblqr-1-0", "libaom3", "libdav1d5", "libde265-0", "libx265-199"]).output().unwrap();
 	//check if ubuntu iso & bitcoin core already exists, and if no, obtain
-	let b = std::path::Path::new(&(get_home().unwrap()+"/arctica/ubuntu-22.04.3-desktop-amd64.iso")).exists();
+	let b = std::path::Path::new(&(get_home().unwrap()+"/arctica/ubuntu-22.04.4-desktop-amd64.iso")).exists();
 	let c = std::path::Path::new(&(get_home().unwrap()+"/arctica/bitcoin-25.0-x86_64-linux-gnu.tar.gz")).exists();
 	if b == false{
 		let output = Command::new("curl").args(["-o", "ubuntu-22.04.3-desktop-amd64.iso", "https://releases.ubuntu.com/jammy/ubuntu-22.04.3-desktop-amd64.iso"]).output().unwrap();
@@ -316,100 +338,16 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 		if !output.status.success() {
 			return Err(format!("ERROR in icreate_bootable with creating writable/upper/home/user directory = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
-	//make dependencies directory
-	Command::new("mkdir").args([&("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	
-	//copying dependencies genisoimage
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/genisoimage_9%3a1.1.11-3.2ubuntu1_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
+	//copying warm dependencies
+	let output = Command::new("cp").args(["-r", &(get_home().unwrap()+"/arctica/warm"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
 	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying genisoimage = {}", std::str::from_utf8(&output.stderr).unwrap()));
+		return Err(format!("ERROR in create_bootable with copying warm deps = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
-	//copying dependencies ssss
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/ssss_0.5-5_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
+	//copying cold dependencies
+	let output = Command::new("cp").args(["-r", &(get_home().unwrap()+"/arctica/cold"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
 	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying ssss = {}", std::str::from_utf8(&output.stderr).unwrap()));
+		return Err(format!("ERROR in create_bootable with copying cold deps = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
-	//copying dependencies wodim
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/wodim_9%3a1.1.11-3.2ubuntu1_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying wodim = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies libqrencode4 library
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/libqrencode4_4.1.1-1_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying qrencode = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies qrencode
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/qrencode_4.1.1-1_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying qrencode = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies xclip
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/xclip_0.13-2_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying X clip = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies tor
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/tor_0.4.6.10-1_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying tor = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies libzbar0
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/libzbar0_0.23.92-4build2_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying libzbar0 = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies imagemagick
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/imagemagick-6-common_8%3a6.9.11.60+dfsg-1.3ubuntu0.22.04.3_all.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying image magick = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies libaom3
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/libaom3_3.3.0-1_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying libaom3 = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}	
-	//copying dependencies libdav1d5
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/libdav1d5_0.9.2-1_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying libdav1d5 = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}	
-	//copying dependencies libde265-0
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/libde265-0_1.0.8-1_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying libde265-0 = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}	
-	//copying dependencies libx265-199
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/libx265-199_3.5-2_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying libx265-199 = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies libheif1
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/libheif1_1.12.0-2build1_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying libheif1 = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies liblqr-1-0
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/liblqr-1-0_0.4.2-2.1_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying liblqr = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies libmagickcore
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/libmagickcore-6.q16-6_8%3a6.9.11.60+dfsg-1.3ubuntu0.22.04.3_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying libmagickcore = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies libmagickwand-6.q16-6
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/libmagickwand-6.q16-6_8%3a6.9.11.60+dfsg-1.3ubuntu0.22.04.3_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying libmagickwand = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-	//copying dependencies zbar-tools
-	let output = Command::new("cp").args([&(get_home().unwrap()+"/arctica/zbar-tools_0.23.92-4build2_amd64.deb"), &("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/dependencies")]).output().unwrap();
-	if !output.status.success() {
-		return Err(format!("ERROR in create_bootable with copying zbar-tools = {}", std::str::from_utf8(&output.stderr).unwrap()));
-	}
-
 	//copy over arctica binary
 	let output = Command::new("cp").args([format!("{}/Arctica", initial_cwd.unwrap()), format!("/media/{}/writable/upper/home/ubuntu", get_user().unwrap())]).output().unwrap();
 	if !output.status.success() {

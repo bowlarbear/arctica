@@ -137,3 +137,26 @@ Please Note, developers can enable a test sandbox by setting the first line of t
 
 This sandbox will require some custom file architecture that the app will not yet provide entirely for you. I have a series of bash scripts I use to create this architecture and I am happy to share if you would like some help. 
 
+
+Dev notes for local build process (this will eventually be handled by the installer)
+
+Build the latest iso
+`cargo build`
+
+Remove the stale iso
+`rm /home/$USER/arctica-ubuntu-iso-builder/builder/iso-overlay/Arctica`
+
+Copy the latest iso to the iso builder repo
+`cp /home/$USER/arctica/target/debug/Arctica /home/$USER/arctica-ubuntu-iso-builder/builder/iso-overlay`
+
+Run the docker build command from within the iso builder repo
+`./docker.sh -r ./build.sh`
+
+Remove stale iso from arctica-tmp
+`rm /home/$USER/arctica-tmp/arctica-ubuntu-22.04-amd64.iso`
+
+Copy the Arctica Ubuntu iso to the arctica-tmp dir (make this dir first if you don't have it already)
+`cp /home/$USER//arctica-ubuntu-iso-builder/work/out/arctica-ubuntu-22.04-amd64.iso /home/$USER/arctica-tmp`
+
+Now you can run the app and the latest binary will be provided to the installer
+`cargo run`

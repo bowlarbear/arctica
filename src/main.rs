@@ -37,9 +37,9 @@ use init::{
 mod setup;
 use setup::{
 	create_setup_cd, generate_store_key_pair, 
-	generate_store_simulated_time_machine_key_pair, create_descriptor, install_cold_deps, distribute_shards_hw2, 
+	generate_store_simulated_time_machine_key_pair, create_descriptor, install_hw_deps, distribute_shards_hw2, 
 	distribute_shards_hw3, distribute_shards_hw4, distribute_shards_hw5, distribute_shards_hw6,
-	distribute_shards_hw7, create_backup, make_backup, install_warm_deps,
+	distribute_shards_hw7, create_backup, make_backup,
 };
 
 //import bitcoin.rs module
@@ -351,7 +351,7 @@ async fn mount_internal() -> Result<String, String> {
 		let output = Command::new("pgrep").arg("bitcoind").output().unwrap();
 		if !output.stdout.is_empty(){
 			//Attempt to shut down bitcoin core
-			let output = Command::new(&(get_home().unwrap()+"/bitcoin-25.0/bin/bitcoin-cli")).args(["stop"]).output().unwrap();
+			let output = Command::new(&(get_home().unwrap()+"/bitcoin-28.0/bin/bitcoin-cli")).args(["stop"]).output().unwrap();
 			//bitcoin core shutdown fails (meaning it was not running)...
 			if output.status.success() {
 				//function succeeds, core is running for some reason, wait 15s for daemon to stop
@@ -961,8 +961,7 @@ fn main() {
         create_ramdisk,
         packup,
         unpack,
-        install_cold_deps,
-		install_warm_deps,
+        install_hw_deps,
         refresh_cd,
 		calculate_decay_time,
         distribute_shards_hw2,

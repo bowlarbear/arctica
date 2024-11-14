@@ -1,8 +1,10 @@
 /target/
 /scripts/
+/warm/
+/cold/
 WixTools
 ubuntu-22.04.2-desktop-amd64.iso
-bitcoin-25.0-x86_64-linux-gnu.tar.gz
+bitcoin-28.0-x86_64-linux-gnu.tar.gz
 persistent-ubuntu.iso
 scripts/persistent-ubuntu.iso
 persistent-ubuntu1.iso
