@@ -27,6 +27,9 @@ use crate::helper::{
 	retrieve_decay_time_integer, unix_to_block_height, store_unsigned_psbt
 };
 
+const BITCOIN_CLI_PATH: &str = "/bitcoin-25.0/bin/bitcoin-cli";
+const BITCOIN_DAEMON_PATH: &str = "/bitcoin-25.0/bin/bitcoind";
+
 //custom structs
 #[derive(Clone, Serialize)]
 struct CustomTransaction {
@@ -405,7 +408,7 @@ pub fn import_descriptor(wallet: String, hwnumber: &String, internal: bool) -> R
 #[tauri::command]
 //get a new address
 //accepts "low", "immediate", and "delayed" as a param
-//equivalent to... Command::new("./bitcoin-28.0/bin/bitcoin-cli").args([&("-rpcwallet=".to_string()+&(wallet.to_string())+"_wallet"), "getnewaddress"])
+//equivalent to... Command::new("./bitcoin-25.0/bin/bitcoin-cli").args([&("-rpcwallet=".to_string()+&(wallet.to_string())+"_wallet"), "getnewaddress"])
 //must be done with client url param URL=<hostname>/wallet/<wallet_name>
 pub async fn get_address(walletname: String, hwnumber:String) -> Result<String, String> {
 	// //need to kill eog here if it's running as it will show a stale QR and/or crash otherwise
@@ -568,7 +571,7 @@ let locktime = match retrieve_median_blocktime(){
 	Err(err)=> return Err(format!("{}", err.to_string()))
 };
 //1st attempt
-let psbt_output1 = Command::new(&(get_home().unwrap()+"/bitcoin-28.0/bin/bitcoin-cli"))
+let psbt_output1 = Command::new(&(get_home().unwrap()+&BITCOIN_CLI_PATH.to_string()))
 .args([&("-rpcwallet=".to_string()+&(walletname.to_string())+"_wallet"+&hwnumber.to_string()), 
 "walletcreatefundedpsbt", 
 &json_input.to_string(), //empty array lets core pick the inputs
@@ -584,7 +587,7 @@ if fee_check.contains("Insufficient funds"){
 	options["subtractFeeFromOutputs"] = json!([]);
 };
 //2nd attempt
-let psbt_output2 = Command::new(&(get_home().unwrap()+"/bitcoin-28.0/bin/bitcoin-cli"))
+let psbt_output2 = Command::new(&(get_home().unwrap()+&BITCOIN_CLI_PATH.to_string()))
 .args([&("-rpcwallet=".to_string()+&(walletname.to_string())+"_wallet"+&hwnumber.to_string()), 
 "walletcreatefundedpsbt", 
 &json_input.to_string(), //unchanged
@@ -619,17 +622,17 @@ Ok(format!("PSBT: {:?}", psbt))
 #[tauri::command]
 pub async fn init_bitcoind() ->Result<String, String> {
 	//Download core if needed
-	let bitcoin_tar = std::path::Path::new(&(get_home().unwrap()+"/arctica/bitcoin-28.0-x86_64-linux-gnu.tar.gz")).exists();
+	let bitcoin_tar = std::path::Path::new(&(get_home().unwrap()+"/arctica/bitcoin-25.0-x86_64-linux-gnu.tar.gz")).exists();
 	if bitcoin_tar == false{
-		let output = Command::new("wget").args(["-O", &(get_home().unwrap()+"/arctica/bitcoin-28.0-x86_64-linux-gnu.tar.gz"),"https://bitcoincore.org/bin/bitcoin-core-28.0/bitcoin-28.0-x86_64-linux-gnu.tar.gz"]).output().unwrap();
+		let output = Command::new("wget").args(["-O", &(get_home().unwrap()+"/arctica/bitcoin-25.0-x86_64-linux-gnu.tar.gz"),"https://bitcoincore.org/bin/bitcoin-core-25.0/bitcoin-25.0-x86_64-linux-gnu.tar.gz"]).output().unwrap();
 		if !output.status.success() {
 			return Err(format!("ERROR in init_bitcoind with downloading bitcoin core = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
 	}
 	//extract bitcoin core
-	let bitcoin = std::path::Path::new(&(get_home().unwrap()+"/bitcoin-28.0")).exists();
+	let bitcoin = std::path::Path::new(&(get_home().unwrap()+"/bitcoin-25.0")).exists();
 	if bitcoin == false{
-		let output = Command::new("tar").args(["-xzf", &(get_home().unwrap()+"/arctica/bitcoin-28.0-x86_64-linux-gnu.tar.gz"), "-C", &get_home().unwrap()]).output().unwrap();
+		let output = Command::new("tar").args(["-xzf", &(get_home().unwrap()+"/arctica/bitcoin-25.0-x86_64-linux-gnu.tar.gz"), "-C", &get_home().unwrap()]).output().unwrap();
 		if !output.status.success() {
 			return Err(format!("ERROR in init_bitcoind with extracting bitcoin core = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
@@ -676,7 +679,7 @@ pub async fn start_bitcoind(reindex:bool, networkactive:bool, wallets:bool) -> R
         println!("start_bitcoind: networkactive == false");
         bash("sudo", &vec!["nmcli", "networking", "off"], false)?;
         if (!bash("ping", &vec!["-c", "1", "linux.org"], false).is_err()) { return Err(Error::NetworkActive()); }
-        bash(&(get_home()?+"/bitcoin-28.0/bin/bitcoind"), &vec![
+        bash(&(get_home()?+&BITCOIN_DAEMON_PATH.to_string()), &vec![
             "-debuglogfile=/mnt/ramdisk/debug.log",
             &format!("-conf={}", get_home()?+"/.bitcoin/bitcoin.conf"),//TODO: no need to specify conf if datadir is listed
             "-walletdir=/mnt/ramdisk/sensitive/wallets",
@@ -689,7 +692,7 @@ pub async fn start_bitcoind(reindex:bool, networkactive:bool, wallets:bool) -> R
         //TODO: Better name for wallets(wallets_enabled?)
         if !wallets {
             println!("start_bitcoind: wallets == false");
-            bash(&(get_home()?+"/bitcoin-28.0/bin/bitcoind"), &vec![
+            bash(&(get_home()?+&BITCOIN_DAEMON_PATH.to_string()), &vec![
                 "-debuglogfile=/mnt/ramdisk/debug.log",
                 &format!("-datadir={}", get_home()?+"/.bitcoin")], true)?;
 
@@ -708,7 +711,7 @@ pub async fn start_bitcoind(reindex:bool, networkactive:bool, wallets:bool) -> R
             println!("start_bitcoind: get host");
             if reindex {
                 println!("start_bitcoind: reindex == true");
-                bash(&(get_home()?+"/bitcoin-28.0/bin/bitcoind"), &vec![
+                bash(&(get_home()?+&BITCOIN_DAEMON_PATH.to_string()), &vec![
                     "-reindex",
                     "-debuglogfile=/mnt/ramdisk/debug.log",
                     &format!("-conf={}", get_home()?+"/.bitcoin/bitcoin.conf"),
@@ -716,7 +719,7 @@ pub async fn start_bitcoind(reindex:bool, networkactive:bool, wallets:bool) -> R
                     "-walletdir=/mnt/ramdisk/sensitive/wallets"], true)?;
             } else {
                 println!("start_bitcoind: reindex == false");
-                bash(&(get_home()?+"/bitcoin-28.0/bin/bitcoind"), &vec![
+                bash(&(get_home()?+&BITCOIN_DAEMON_PATH.to_string()), &vec![
                     "-debuglogfile=/mnt/ramdisk/debug.log",
                     &format!("-conf={}", get_home()?+"/.bitcoin/bitcoin.conf"),
                     &format!("-datadir=/media/{}/{}/home/{}/.bitcoin", get_user()?, uuid, host_user),
@@ -738,42 +741,51 @@ pub async fn start_bitcoind(reindex:bool, networkactive:bool, wallets:bool) -> R
 //check Bitcoin Sync Status
 #[tauri::command]
 pub async fn check_bitcoin_sync_status() -> Result<String, String> {
+		println!("starting check sync");
+		//declare the client object
+		let auth = bitcoincore_rpc::Auth::UserPass("rpcuser".to_string(), "477028".to_string());
+		let client = match bitcoincore_rpc::Client::new(&"127.0.0.1:8332".to_string(), auth){
+			Ok(client)=> client,
+			Err(err)=> return Err(format!("{}", err.to_string()))
+		};
 		//loop to monitor sync progress
 		loop{
-			//declare the client object
-			let auth = bitcoincore_rpc::Auth::UserPass("rpcuser".to_string(), "477028".to_string());
-			let client = match bitcoincore_rpc::Client::new(&"127.0.0.1:8332".to_string(), auth){
-				Ok(client)=> client,
-				Err(err)=> return Err(format!("{}", err.to_string()))
-			};
+			println!("looping sync check");
 			//query getblockchaininfo
-			match client.get_blockchain_info(){
+			let results = match client.get_blockchain_info(){
 				//if a valid response is received...
 				Ok(res) => {
+					println!("Got blockchain info: {:?}", res);
 					//sleep and continue the loop in the event that the chain is not synced
 					let progress =  res.verification_progress; 
 					if progress < 0.9999{
+						println!("sync not complete, restarting loop");
 						std::thread::sleep(Duration::from_secs(5));
 						continue;
 					}
 					//break the query loop once the sync exceed 0.9999
 					else{
+						println!("sync complete, breaking loop");
 						break;
 					}
 				},
 				//when the daemon is still performing initial block db verification
-				Err(_) => {
+				Err(err) => {
+					println!("Error...: {:?}", err);
 					//pgrep bitcoind to check if running
 					let output = Command::new("pgrep").arg("bitcoind").output().unwrap();
 					if output.stdout.is_empty(){
+						println!("Bitcoin daemon has stopped");
 						Command::new("sync").output().unwrap();
 						return Err(format!("ERROR Bitcoin Daemon has stopped unexpectedly"))
 					}
 					//sleep and continue the loop
+					println!("waiting for IDB, continuing the loop");
 					std::thread::sleep(Duration::from_secs(5));
 					continue;
 				},
 			};
+			println!("Query Results: {:?}", results);
 		}
 		Ok(format!("SUCCESS in syncing bitcoin timechain"))
 		}
@@ -788,7 +800,7 @@ pub async fn stop_bitcoind() -> Result<String, String> {
 	}
 	//stop bitcoind
 	//TODO, need to sleep and loop here if the error response includes "VERIFYING BLOCKS" (although this shouldn't happen under normal circumstances)
-	let output = Command::new(&(get_home().unwrap()+"/bitcoin-28.0/bin/bitcoin-cli")).args(["stop"]).output().unwrap();
+	let output = Command::new(&(get_home().unwrap()+&BITCOIN_CLI_PATH.to_string())).args(["stop"]).output().unwrap();
 	if !output.status.success() {
 		return Err(format!("ERROR in stopping bitcoin daemon = {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
@@ -1043,7 +1055,7 @@ pub async fn broadcast_tx(walletname: String, hwnumber: String) -> Result<String
 	let finalized_str = hex::encode(finalized);
 
 	//broadcast the tx
-	let broadcast_output = Command::new(&(get_home().unwrap()+"/bitcoin-28.0/bin/bitcoin-cli"))
+	let broadcast_output = Command::new(&(get_home().unwrap()+&BITCOIN_CLI_PATH.to_string()))
 		.args([&("-rpcwallet=".to_string()+&(walletname.to_string())+"_wallet"+&hwnumber.to_string()), 
 		"sendrawtransaction", 
 		&finalized_str

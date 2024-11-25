@@ -52,6 +52,10 @@ use bitcoin_wallet::{
 
 struct TauriState(Mutex<Option<Client>>);
 
+const BITCOIN_CLI_PATH: &str = "/bitcoin-25.0/bin/bitcoin-cli";
+const BITCOIN_DAEMON_PATH: &str = "/bitcoin-25.0/bin/bitcoind";
+
+
 #[tauri::command]
 fn test_function() -> Result<String, Error> {
     println!("runnig test_function");
@@ -351,7 +355,7 @@ async fn mount_internal() -> Result<String, String> {
 		let output = Command::new("pgrep").arg("bitcoind").output().unwrap();
 		if !output.stdout.is_empty(){
 			//Attempt to shut down bitcoin core
-			let output = Command::new(&(get_home().unwrap()+"/bitcoin-28.0/bin/bitcoin-cli")).args(["stop"]).output().unwrap();
+			let output = Command::new(&(get_home().unwrap()+&BITCOIN_CLI_PATH.to_string())).args(["stop"]).output().unwrap();
 			//bitcoin core shutdown fails (meaning it was not running)...
 			if output.status.success() {
 				//function succeeds, core is running for some reason, wait 15s for daemon to stop

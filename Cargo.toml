@@ -18,7 +18,7 @@ tauri-build = { version = "1.0.0-rc.9" }
 [dependencies]
 tokio = "1.14.1"
 bitcoincore-rpc = { git = "https://github.com/rust-bitcoin/rust-bitcoincore-rpc", branch = "master" }
-bitcoincore-rpc-json = "0.17.0"
+bitcoincore-rpc-json = "0.19.0"
 bitcoin = { version = "0.30.0", features = ["rand"] }
 miniscript = "8.0.0"
 hex = "0.4.3"

@@ -106,9 +106,9 @@ pub async fn init_iso() -> Result<String, String> {
 		}
 	}
 	//remove stale iso mount if exist from a previous session
-	let iso = std::path::Path::new(&("/media/".to_string()+&get_user().unwrap()+"/Ubuntu 22.04.3 LTS amd64")).exists();
+	let iso = std::path::Path::new(&("/media/".to_string()+&get_user().unwrap()+"/Ubuntu 22.04.4 LTS amd64")).exists();
 	if iso == true{
-		let output = Command::new("sudo").args(["umount", &("/media/".to_string()+&get_user().unwrap()+"/Ubuntu 22.04.3 LTS amd64")]).output().unwrap();
+		let output = Command::new("sudo").args(["umount", &("/media/".to_string()+&get_user().unwrap()+"/Ubuntu 22.04.4 LTS amd64")]).output().unwrap();
 		if !output.status.success() {
 			return Err(format!("ERROR in init iso with unmounting stale ubuntu iso = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
@@ -143,7 +143,7 @@ pub async fn init_iso() -> Result<String, String> {
 	let b = std::path::Path::new(&(get_home().unwrap()+"/arctica/ubuntu-22.04.4-desktop-amd64.iso")).exists();
 	let c = std::path::Path::new(&(get_home().unwrap()+"/arctica/bitcoin-25.0-x86_64-linux-gnu.tar.gz")).exists();
 	if b == false{
-		let output = Command::new("curl").args(["-o", "ubuntu-22.04.3-desktop-amd64.iso", "https://releases.ubuntu.com/jammy/ubuntu-22.04.3-desktop-amd64.iso"]).output().unwrap();
+		let output = Command::new("curl").args(["-o", "ubuntu-22.04.4-desktop-amd64.iso", "https://releases.ubuntu.com/jammy/ubuntu-22.04.4-desktop-amd64.iso"]).output().unwrap();
 		if !output.status.success() {
 			return Err(format!("ERROR in init iso with downloading ubuntu iso = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
@@ -168,7 +168,7 @@ pub async fn init_iso() -> Result<String, String> {
 	//create sed1 script
 	let file = File::create(&(get_home().unwrap()+"/arctica/scripts/sed1.sh")).unwrap();
 	//populate sed1.sh with bash
-	let output = Command::new("echo").args(["-e", "< ubuntu-22.04.3-desktop-amd64.iso sed 's/maybe-ubiquity/  persistent  /' > persistent-ubuntu1.iso"]).stdout(file).output().unwrap();
+	let output = Command::new("echo").args(["-e", "< ubuntu-22.04.4-desktop-amd64.iso sed 's/maybe-ubiquity/  persistent  /' > persistent-ubuntu1.iso"]).stdout(file).output().unwrap();
 	if !output.status.success() {
 		return Err(format!("ERROR with creating sed1.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
 	}
