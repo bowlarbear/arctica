@@ -85,6 +85,7 @@ pub async fn pre_install(root: String, target: String) -> Result<String, String>
 //build the arctica iso for initial flash
 #[tauri::command]
 pub async fn init_iso() -> Result<String, String> {
+	println!("creating persistent ubuntu iso");
 	//install updates
 	Command::new("sudo").args(["apt", "-y", "update"]).output().unwrap();
 	Command::new("sudo").args(["apt", "-y", "upgrade"]).output().unwrap();
@@ -143,7 +144,7 @@ pub async fn init_iso() -> Result<String, String> {
 	let b = std::path::Path::new(&(get_home().unwrap()+"/arctica/ubuntu-22.04.4-desktop-amd64.iso")).exists();
 	let c = std::path::Path::new(&(get_home().unwrap()+"/arctica/bitcoin-25.0-x86_64-linux-gnu.tar.gz")).exists();
 	if b == false{
-		let output = Command::new("curl").args(["-o", "ubuntu-22.04.4-desktop-amd64.iso", "https://releases.ubuntu.com/jammy/ubuntu-22.04.4-desktop-amd64.iso"]).output().unwrap();
+		let output = Command::new("curl").args(["-o", "ubuntu-22.04.4-desktop-amd64.iso", "https://old-releases.ubuntu.com/releases/jammy/ubuntu-22.04.4-desktop-amd64.iso"]).output().unwrap();
 		if !output.status.success() {
 			return Err(format!("ERROR in init iso with downloading ubuntu iso = {}", std::str::from_utf8(&output.stderr).unwrap()));
 		}
@@ -164,6 +165,21 @@ pub async fn init_iso() -> Result<String, String> {
 		if !output.status.success() {
 			return Err(format!("ERROR in creating the scripts directory {}", std::str::from_utf8(&output.stderr).unwrap()));
 		} 
+	}
+	//remove stale sed scripts if they exist
+	let sed1 = Path::new(&(get_home().unwrap()+"/arctica/scripts/sed1.sh")).exists();
+	let sed2 = Path::new(&(get_home().unwrap()+"/arctica/scripts/sed2.sh")).exists();
+	if sed1 == true{
+		let output = Command::new("sudo").args(["rm", &(get_home().unwrap()+"/arctica/scripts/sed1.sh")]).output().unwrap();
+		if !output.status.success() {
+			return Err(format!("ERROR with removing stale sed1.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
+		}
+	}
+	if sed2 == true {
+		let output = Command::new("sudo").args(["rm", &(get_home().unwrap()+"/arctica/scripts/sed2.sh")]).output().unwrap();
+		if !output.status.success() {
+			return Err(format!("ERROR with removing stale sed2.sh: {}", std::str::from_utf8(&output.stderr).unwrap()));
+		}
 	}
 	//create sed1 script
 	let file = File::create(&(get_home().unwrap()+"/arctica/scripts/sed1.sh")).unwrap();
@@ -203,6 +219,14 @@ pub async fn init_iso() -> Result<String, String> {
 	Command::new("sudo").args(["rm", "persistent-ubuntu1.iso"]).output().unwrap();
 	//reset the current working directory
 	env::set_current_dir(get_home().unwrap());
+	//force remove any stable writable directory
+	let writable = std::path::Path::new(&("/media/".to_string()+&get_user().unwrap()+"/writable")).exists();
+	if writable == true{
+		let output = Command::new("sudo").args(["rm", "-r", "-f", &("/media/".to_string()+&get_user().unwrap()+"/writable")]).output().unwrap();
+		if !output.status.success() {
+			return Err(format!("ERROR in removing stale writable directory {}", std::str::from_utf8(&output.stderr).unwrap()));
+		} 
+	}
 	Ok(format!("SUCCESS in init_iso"))
 }
 
@@ -211,7 +235,7 @@ pub async fn init_iso() -> Result<String, String> {
 pub async fn create_bootable_usb(number: String, setup: String, awake: bool, baseline: String) -> Result<String, String> {
 	//TODO check for existing arctica installation and return error if found
 	//OR should we let the software overwrite an existing installation in case a user wants to retry after a failed attempt with the same stick?
-	
+	println!("creating bootable ubuntu device writing config...HW {} Setupstep {}", number, setup);
 	//obtain application's current working directory
 	let initial_cwd_buf = match env::current_dir(){
 		Ok(data) => data,
@@ -219,13 +243,16 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 	};
 	//convert cwd to string
 	let initial_cwd = initial_cwd_buf.to_str();
+	println!("initial CWD: {:?}", &initial_cwd);
 	//calculate & define target device
 	let target = match find_new_device(&baseline){
 		Ok(result) => result,
 		Err(e) => 
 		return Err(e.to_string())
 	};
+	println!("found target device: {}", &target);
 	//unmount the target device
+	println!("unmounting target device:");
 	Command::new("sudo").args(["umount", &target]).output().unwrap();
 	//calculate & define target device
 	let target = match find_new_device(&baseline){
@@ -233,7 +260,9 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 		Err(e) => 
 		return Err(e.to_string())
 	};
+	println!("found new target device: {}", &target);
 	//burn iso with dd
+	println!("burning iso with dd...");
 	let output = Command::new("sudo")
         .args(["dd", &("if=".to_string()+&get_home().unwrap()+"/arctica/persistent-ubuntu.iso"), &("of=".to_string()+&target), "bs=4M", "oflag=sync", "status=progress"])
         .output()
@@ -241,6 +270,7 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 		if !output.status.success() {
 			return Err(format!("ERROR in create_bootable with Burning ISO with DD = {}", std::str::from_utf8(&output.stderr).unwrap()));
     	}
+	println!("iso burn output: {:?}", &output);
 	//Flush the Filesystem Buffers
 	Command::new("sync").output().unwrap();
 	//unmount the target device
@@ -377,7 +407,6 @@ pub async fn create_bootable_usb(number: String, setup: String, awake: bool, bas
 	//write device type to config, values provided by front end
 	let file = File::create(&("/media/".to_string()+&get_user().unwrap()+"/writable/upper/home/ubuntu/config.txt")).unwrap();
 	Command::new("echo").args(["type=hardwareWallet\nhwNumber=".to_string()+&number.to_string()+&"\nsetupStep=".to_string()+&setup.to_string()+&"\nawake=".to_string()+&awake_val.to_string()]).stdout(file).output().unwrap();
-	println!("creating bootable ubuntu device writing config...HW {} Setupstep {}", number, setup);
 	// sleep for 3 seconds
 	Command::new("sleep").args(["3"]).output().unwrap();
 	//open file permissions for config
