@@ -49,7 +49,6 @@
 
 
   <p> <a href="https://github.com/bowlarbear/arctica-iso-builder">ISO Builder utility </a> </p>
-              <p>A comprehensive technial design document can be found <a href="https://docs.google.com/document/d/1xRGrQT8TMdm1fByosnF7j1ZKKSrY7U7Q_8lHs9Qc1pQ/edit?usp=sharing">here</a> </p>
         <p>NOTE: Arctica is currently in Beta and is not currently recommended for the storage of large amounts until we have completed more extensive Beta testing.</p>
     </div>
 </template>
